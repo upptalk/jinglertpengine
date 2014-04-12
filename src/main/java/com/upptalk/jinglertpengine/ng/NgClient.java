@@ -1,6 +1,5 @@
 package com.upptalk.jinglertpengine.ng;
 
-import com.google.common.hash.Hashing;
 import com.upptalk.jinglertpengine.ng.hash.ConsistentHashServerLocator;
 import com.upptalk.jinglertpengine.ng.hash.ServerLocator;
 import com.upptalk.jinglertpengine.ng.protocol.NgCommand;
@@ -16,7 +15,6 @@ import io.netty.util.CharsetUtil;
 import org.apache.log4j.Logger;
 
 import java.net.InetSocketAddress;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -79,7 +77,7 @@ public class NgClient {
         if (log.isDebugEnabled()) {
             log.debug("Sending message: "+ command.toString() + " - key: " + key);
         }
-        final InetSocketAddress server = selectServer(key);
+        final InetSocketAddress server = getServerLocator().selectServer(key, getAvailableServers());
         sendDirect(command, server);
     }
 
@@ -103,25 +101,6 @@ public class NgClient {
             }
         }
     }
-
-    /*
-    Select a media proxy node using a simple load balancing method
-    TODO use a consistent hash method
-     */
-    /*private InetSocketAddress selectServer(String key) {
-        return getAvailableServers().get(key.hashCode() % getAvailableServers().size());
-    }*/
-
-    /*
-    Select a media proxy node using a consistent hash key to map the server
-    - in case bad servers are removed from list of available servers, no re-mapping will occur
-    */
-    private InetSocketAddress selectServer(String key) {
-        int index = Hashing.consistentHash(Hashing.md5().hashString(key, Charset.defaultCharset()),
-                getAvailableServers().size());
-        return getAvailableServers().get(index);
-    }
-
 
     public void close() throws InterruptedException {
         try {

@@ -22,7 +22,7 @@
     </properties>
 
     <build>
-        <finalName>jingle-monitor</finalName>
+        <finalName>jinglertpengine</finalName>
         <plugins>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>

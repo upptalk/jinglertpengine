@@ -175,6 +175,11 @@
             <artifactId>guava</artifactId>
             <version>17.0-rc2</version>
         </dependency>
+        <dependency>
+            <groupId>com.googlecode.concurrentlinkedhashmap</groupId>
+            <artifactId>concurrentlinkedhashmap-lru</artifactId>
+            <version>1.4</version>
+        </dependency>
         <!-- TEST SCOPE -->
 
         <dependency>

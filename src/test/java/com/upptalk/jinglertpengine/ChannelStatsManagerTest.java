@@ -14,6 +14,8 @@ import java.util.List;
 /**
  * Channel stats manager test
  *
+ * Test required rtpengine installed
+ *
  * @author bhlangonijr
  *         Date: 4/9/14
  *         Time: 11:40 PM
@@ -29,10 +31,11 @@ public class ChannelStatsManagerTest {
             client.setServers(new InetSocketAddress("localhost", 2223));
 
             ChannelStatsManager manager = new ChannelStatsManager(5000);
-            manager.setChannelTimeout(2000);
+            manager.setChannelTimeout(10000);
             manager.setNgClient(client);
 
             List<NgCommandListener> commandListeners = new ArrayList<>();
+            commandListeners.add(manager);
             commandListeners.add(new NgCommandListener() {
                 @Override
                 public void sent(NgCommand command, InetSocketAddress server) {
@@ -41,6 +44,7 @@ public class ChannelStatsManagerTest {
             });
 
             List<NgResultListener> listeners = new ArrayList<>();
+            listeners.add(manager);
             listeners.add(new NgResultListener() {
                 @Override
                 public void receive(NgResult result) {

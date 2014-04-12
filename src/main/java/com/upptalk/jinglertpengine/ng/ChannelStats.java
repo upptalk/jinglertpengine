@@ -52,4 +52,12 @@ class ChannelStats {
         this.receivedCommands.incrementAndGet();
     }
 
+    public int getSentCommands() {
+        return sentCommands.get();
+    }
+
+    public int getReceivedCommands() {
+        return receivedCommands.get();
+    }
+
 }

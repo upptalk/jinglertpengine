@@ -1,6 +1,8 @@
 package com.upptalk.jinglertpengine.ng;
 
 import com.google.common.hash.Hashing;
+import com.upptalk.jinglertpengine.ng.hash.ConsistentHashServerLocator;
+import com.upptalk.jinglertpengine.ng.hash.ServerLocator;
 import com.upptalk.jinglertpengine.ng.protocol.NgCommand;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.Unpooled;
@@ -39,6 +41,7 @@ public class NgClient {
     private List<InetSocketAddress> servers;
     private List<NgResultListener> resultListeners;
     private List<NgCommandListener> commandListeners;
+    private ServerLocator serverLocator;
 
     public NgClient() throws InterruptedException {
         availableServers = new CopyOnWriteArrayList<InetSocketAddress>();
@@ -46,6 +49,7 @@ public class NgClient {
         ngClientHandler = new NgClientHandler(getResultListeners());
         bootstrap = new Bootstrap();
         channel = createChannel();
+        serverLocator = new ConsistentHashServerLocator(); // default
     }
 
     private Channel createChannel() throws InterruptedException {
@@ -76,7 +80,7 @@ public class NgClient {
             log.debug("Sending message: "+ command.toString() + " - key: " + key);
         }
         final InetSocketAddress server = selectServer(key);
-        send(command, server);
+        sendDirect(command, server);
     }
 
     /**
@@ -89,7 +93,7 @@ public class NgClient {
      * @param server Address of media proxy server
      * @throws Exception
      */
-    public void send(NgCommand command, InetSocketAddress server) throws Exception {
+    public void sendDirect(NgCommand command, InetSocketAddress server) throws Exception {
         channel.writeAndFlush(new DatagramPacket(
                 Unpooled.copiedBuffer(command.toBencode(), CharsetUtil.UTF_8),
                 server)).sync();
@@ -113,7 +117,8 @@ public class NgClient {
     - in case bad servers are removed from list of available servers, no re-mapping will occur
     */
     private InetSocketAddress selectServer(String key) {
-        int index = Hashing.consistentHash(Hashing.md5().hashString(key, Charset.defaultCharset()), servers.size());
+        int index = Hashing.consistentHash(Hashing.md5().hashString(key, Charset.defaultCharset()),
+                getAvailableServers().size());
         return getAvailableServers().get(index);
     }
 
@@ -184,5 +189,13 @@ public class NgClient {
 
     public void setStatsManager(ChannelStatsManager statsManager) {
         this.statsManager = statsManager;
+    }
+
+    public ServerLocator getServerLocator() {
+        return serverLocator;
+    }
+
+    public void setServerLocator(ServerLocator serverLocator) {
+        this.serverLocator = serverLocator;
     }
 }

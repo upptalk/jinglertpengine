@@ -1,5 +1,6 @@
 package com.upptalk.jinglertpengine.ng;
 
+import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.upptalk.jinglertpengine.ng.protocol.NgCommand;
 import com.upptalk.jinglertpengine.ng.protocol.NgCommandType;
 import com.upptalk.jinglertpengine.ng.protocol.NgResult;
@@ -40,7 +41,7 @@ public class ChannelStatsManager implements NgResultListener, NgCommandListener 
     public ChannelStatsManager(long channelAvailableTaskDelay) {
         this.channelAvailableTaskDelay = channelAvailableTaskDelay;
         channelStats = new ConcurrentHashMap<InetSocketAddress, ChannelStats>();
-        pendingMessages = new ConcurrentHashMap<String, Map.Entry<InetSocketAddress,NgCommand>>();
+        pendingMessages = new ConcurrentLinkedHashMap.Builder().maximumWeightedCapacity(10000).build();
         service = Executors.newSingleThreadScheduledExecutor();
         service.scheduleAtFixedRate(new ChannelKeepAliveTask(), 0,
                 getChannelAvailableTaskDelay(), TimeUnit.MILLISECONDS);
@@ -57,21 +58,45 @@ public class ChannelStatsManager implements NgResultListener, NgCommandListener 
         public void run() {
             Assert.notNull(getNgClient());
             // check for timed out channels
+            if (log.isDebugEnabled()) {
+                log.debug("Running channel keep-alive task... ");
+            }
+
             for (InetSocketAddress server: getNgClient().getServers()) {
+                if (getChannelStats(server).getSentCommands() < 1) {
+                    continue;
+                }
+                if (log.isDebugEnabled()) {
+                    log.debug("Checking if channel is live: " + server);
+                }
                 if (!isChannelAlive(server)) {
-                    //consistent hashing can only deal with appending and removal from the end of a list
-                    int n = getNgClient().getAvailableServers().indexOf(server);
-                    getNgClient().getServers().set(n,
-                            getNgClient().getServers().get(getNgClient().getServers().size() - 1));
-                    getNgClient().getServers().remove(getNgClient().getServers().size() - 1);
-                    log.warn("Channel ["+server.toString()+"] " +
-                            "timed out on PING. Removing from list of available servers...");
+                    if (log.isDebugEnabled()) {
+                        log.debug("Channel is not live:  " + server);
+                    }
+                    if (getNgClient().getAvailableServers().contains(server)) {
+                        //consistent hashing can only deal with appending and removal from the end of a list
+                        int n = getNgClient().getAvailableServers().indexOf(server);
+                        getNgClient().getAvailableServers().set(n,
+                                getNgClient().getAvailableServers().get(getNgClient().getAvailableServers().size() - 1));
+                        getNgClient().getAvailableServers().remove(getNgClient().getAvailableServers().size() - 1);
+                        log.warn("Channel ["+server.toString()+"] " +
+                                "timed out on PING. Removing from list of available servers...");
+                    } else {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Channel is already removed from available servers:  " + server);
+                        }
+                    }
                 } else if (!getNgClient().getAvailableServers().contains(server)) {
                     getNgClient().getAvailableServers().add(server);
                     log.warn("Channel ["+server.toString()+"] " +
                             "responded to PING. Adding to list of available servers...");
+                } else {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Channel is available:  " + server);
+                    }
                 }
             }
+
             // send pings for the next round check
             for (InetSocketAddress server: getNgClient().getServers()) {
                 final NgCommand ping = NgCommand.builder()
@@ -79,7 +104,7 @@ public class ChannelStatsManager implements NgResultListener, NgCommandListener 
                         .setNgCommandType(NgCommandType.ping)
                         .build();
                 try {
-                    getNgClient().send(ping, server);
+                    getNgClient().sendDirect(ping, server);
                 } catch (Exception e) {
                     log.error("Failed sending PING command to server " + server, e);
                 }
@@ -97,6 +122,9 @@ public class ChannelStatsManager implements NgResultListener, NgCommandListener 
         if (entry != null) {
             final ChannelStats stats = getChannelStats(entry.getKey());
             stats.addReceivedCommands();
+            if (log.isDebugEnabled()) {
+                log.debug("Updating stats: " + result.getCookie() + " / " + result.getNgResultType());
+            }
             if (result.getNgResultType().equals(NgResultType.pong)) {
                 stats.setLastPongTimestamp(System.currentTimeMillis());
             }
@@ -166,8 +194,12 @@ public class ChannelStatsManager implements NgResultListener, NgCommandListener 
      * @return true if the server is returning to ping messages within the timeout
      */
     public boolean isChannelAlive(InetSocketAddress server) {
-        return (getChannelStats(server).getLastPongTimestamp() -
-                getChannelStats(server).getLastPingTimestamp()) < getChannelTimeout();
+        if (log.isDebugEnabled()) {
+            log.debug("[" +server+ "] Now: " + System.currentTimeMillis() + " - lastPong: " +
+                    getChannelStats(server).getLastPongTimestamp());
+        }
+        return (System.currentTimeMillis() -
+                getChannelStats(server).getLastPongTimestamp()) < getChannelTimeout();
     }
 
 

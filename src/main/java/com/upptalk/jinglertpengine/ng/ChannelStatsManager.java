@@ -143,6 +143,7 @@ public class ChannelStatsManager implements NgResultListener, NgCommandListener 
                 }
                 if (result.getNgResultType().equals(NgResultType.pong)) {
                     stats.setLastPongTimestamp(System.currentTimeMillis());
+                    checkChannel(entry.getServer());
                 }
             }
         } else {

@@ -10,7 +10,8 @@ public enum NgResultType {
 
     pong("pong"),
     ok("ok"),
-    error("error");
+    error("error"),
+    timeout("timeout");
 
     private final String description;
 

@@ -22,6 +22,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * Media Proxy NG client implementation
  *
+ * @see <a href="https://github.com/sipwise/rtpengine#the-ng-control-protocol">Ng Control Protocol</a>
+ *
  * @author bhlangonijr
  *         Date: 4/7/14
  *         Time: 5:50 PM

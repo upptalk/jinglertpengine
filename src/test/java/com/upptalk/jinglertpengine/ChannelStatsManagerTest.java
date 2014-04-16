@@ -30,7 +30,7 @@ public class ChannelStatsManagerTest {
             NgClient client = new NgClient();
             client.setServers(new InetSocketAddress("localhost", 2223));
 
-            ChannelStatsManager manager = new ChannelStatsManager(5000);
+            ChannelStatsManager manager = new ChannelStatsManager(5000, 10);
             manager.setChannelTimeout(10000);
             manager.setNgClient(client);
 

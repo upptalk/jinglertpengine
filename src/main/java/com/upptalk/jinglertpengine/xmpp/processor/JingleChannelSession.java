@@ -19,7 +19,7 @@ public class JingleChannelSession implements Serializable {
     private JingleChannelIQ responseIQ;
     private final long timestamp = System.currentTimeMillis();
 
-    public JingleChannelSession(String id, JingleChannelIQ requestIQ) {
+    private JingleChannelSession(String id, JingleChannelIQ requestIQ) {
         this.id = id;
         this.requestIQ = requestIQ;
     }
@@ -43,4 +43,22 @@ public class JingleChannelSession implements Serializable {
     public void setResponseIQ(JingleChannelIQ responseIQ) {
         this.responseIQ = responseIQ;
     }
+
+
+    /**
+     * Creates a new Jingle Relay Channel Session
+     *
+     * @param id
+     * @param requestIQ
+     * @return The Channel Relay Session
+     */
+    public static JingleChannelSession create(String id, JingleChannelIQ requestIQ) {
+
+        JingleChannelSession s = new JingleChannelSession(id, requestIQ);
+
+
+
+        return s;
+    }
+
 }

@@ -24,12 +24,12 @@
 
 package com.upptalk.jinglertpengine.xmpp.processor;
 
-import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.upptalk.jinglertpengine.xmpp.component.ExternalComponent;
 import com.upptalk.jinglertpengine.xmpp.component.NamespaceProcessor;
 import com.upptalk.jinglertpengine.xmpp.jinglenodes.JingleChannel;
 import com.upptalk.jinglertpengine.xmpp.tinder.JingleChannelIQ;
 import org.apache.log4j.Logger;
+import org.springframework.util.Assert;
 import org.xmpp.packet.IQ;
 
 /**
@@ -42,76 +42,52 @@ public class JingleChannelProcessor implements NamespaceProcessor {
     final static Logger log = Logger.getLogger(JingleChannelProcessor.class);
     private ExternalComponent externalComponent;
     private String localIp;
+    private final JingleChannelSessionManager sessionManager;
 
-    private static final int SESSION_MAX_ENTRIES = 2000;
-    private static final int SESSION_TIME_TO_LIVE =5 * 60 * 60 * 1000;
-
-    private static final int DEFAULT_RTP_LOCAL_PORT_START = 30000;
-    private static final int DEFAULT_RTP_LOCAL_PORT_END = 47000;
-
-    private ConcurrentLinkedHashMap<String, JingleChannelSession> sessions = new ConcurrentLinkedHashMap.Builder().
-            maximumWeightedCapacity(SESSION_MAX_ENTRIES).build(); //, SESSION_TIME_TO_LIVE
+    private static final int DEFAULT_RTP_LOCAL_PORT_START = 10000;
+    private static final int DEFAULT_RTP_LOCAL_PORT_END = 60000;
 
     private int rtpStartPort = DEFAULT_RTP_LOCAL_PORT_START;
     private int rtpEndPort = DEFAULT_RTP_LOCAL_PORT_END;
 
-
-    public JingleChannelProcessor() {
-
+    public JingleChannelProcessor(final JingleChannelSessionManager sessionManager) {
+        Assert.notNull(sessionManager);
+        this.sessionManager = sessionManager;
     }
 
     public void init() {
 
     }
 
+    /**
+     * Process the incoming channel request
+     *
+     * @param xmppIQ
+     * @return
+     */
     public IQ processIQ(final IQ xmppIQ) {
-
         JingleChannelIQ iq = null;
         if (log.isDebugEnabled()) {
             log.debug("Received IQ: " + xmppIQ);
         }
         try {
-
             iq = JingleChannelIQ.fromXml(xmppIQ);
-            updateJingleChannelSession(iq);
-            processJingleChannel(iq);
-
-
-
-
-
+            JingleChannelSession session = sessionManager.createSession(iq.getID(), iq);
+            processJingleChannel(session);
         } catch (JingleChannelException e) {
             log.error("Error Processing Jingle Channel request", e);
         } catch (Throwable e) {
             log.error("Severe Error Processing Jingle channel: " + xmppIQ, e);
         }
 
-        return IQ.createResultIQ(iq);
+        //should be return by JingleChannelSessionManager
+        return null;//IQ.createResultIQ(iq);
 
     }
 
-    private void processJingleChannel(final JingleChannelIQ iq) throws JingleChannelException {
+    private void processJingleChannel(final JingleChannelSession session) throws JingleChannelException {
 
-        final JingleChannelSession session = sessions.get(iq.getID());
         //TODO
-
-
-    }
-
-
-    private void updateJingleChannelSession(final JingleChannelIQ iq) {
-
-        final String id = iq.getID();
-        JingleChannelSession s = sessions.get(id);
-
-        if (s == null) {
-            s = new JingleChannelSession(id, iq);
-            sessions.put(id, s);
-        }
-
-        if (iq.getType().equals(org.jivesoftware.smack.packet.IQ.Type.RESULT)) {
-            s.setResponseIQ(iq);
-        }
 
     }
 
@@ -173,4 +149,7 @@ public class JingleChannelProcessor implements NamespaceProcessor {
         this.rtpEndPort = rtpEndPort;
     }
 
+    public JingleChannelSessionManager getSessionManager() {
+        return sessionManager;
+    }
 }

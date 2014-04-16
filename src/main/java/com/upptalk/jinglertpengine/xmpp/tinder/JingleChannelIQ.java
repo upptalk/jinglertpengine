@@ -59,6 +59,27 @@ public class JingleChannelIQ extends XStreamIQ<JingleChannel> {
         return null;
     }
 
+
+    /**
+     * Creates a JingleChannelIQ result
+     * @see <a href="http://xmpp.org/extensions/xep-0278.html">http://jabber.org/protocol/jinglenodes#channel</a>
+     * @param iq
+     * @return
+     */
+    public static JingleChannelIQ createResult(final JingleChannelIQ iq, String host, String protocol,
+                                               int localport, int remoteport) {
+        final JingleChannel j = new JingleChannel(protocol, host, localport, remoteport, iq.getID());
+
+        final JingleChannelIQ jingleChannelIQ = new JingleChannelIQ(j);
+        jingleChannelIQ.setTo(iq.getTo());
+        jingleChannelIQ.setFrom(iq.getFrom());
+        jingleChannelIQ.setID(iq.getID());
+        jingleChannelIQ.setType(iq.getType());
+
+        return jingleChannelIQ;
+
+    }
+
     public static JingleChannelIQ clone(final JingleChannelIQ iq) {
         final JingleChannelIQ jingleChannelIQ = new JingleChannelIQ(iq.getJingleChannel());
         jingleChannelIQ.setTo(iq.getTo());

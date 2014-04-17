@@ -33,8 +33,6 @@ public class JingleChannelIQParsingTest {
 
         assertEquals(jingleChannelIQString, iq.toXML());
 
-
-
     }
 
 

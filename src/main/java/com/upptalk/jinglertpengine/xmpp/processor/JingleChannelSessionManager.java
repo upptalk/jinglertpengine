@@ -7,9 +7,13 @@ import com.upptalk.jinglertpengine.ng.protocol.NgCommand;
 import com.upptalk.jinglertpengine.ng.protocol.NgCommandType;
 import com.upptalk.jinglertpengine.ng.protocol.NgResult;
 import com.upptalk.jinglertpengine.util.RandomString;
+import com.upptalk.jinglertpengine.util.SdpUtil;
 import com.upptalk.jinglertpengine.xmpp.tinder.JingleChannelIQ;
 import org.apache.log4j.Logger;
 import org.springframework.util.Assert;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Jingle Channel Session Manager
@@ -51,14 +55,24 @@ public class JingleChannelSessionManager implements NgResultListener {
 
         final String cookie = RandomString.getCookie();
 
+        List<String> flags = new ArrayList<String>();
+        flags.add("trust address");
+
         final NgCommand offer = NgCommand.builder().
                 setCookie(cookie).
                 setNgCommandType(NgCommandType.offer).
-                //setParameter().
+                setParameter("call-id", requestIQ.getID()).
+                setParameter("from-tag", SdpUtil.getFakeFromTag(requestIQ)).
+                setParameter("media address", "192.168.100.105").
+                setParameter("flags", flags).
+                setParameter("sdp", SdpUtil.fakeSdp).
                 build();
 
-
         ngClient.send(offer, requestIQ.getFrom().getNode());
+
+        if (log.isDebugEnabled()) {
+            log.debug("Sent command: " + offer);
+        }
 
         return s;
     }

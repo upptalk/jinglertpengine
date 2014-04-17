@@ -18,12 +18,12 @@ import java.util.Map;
 public class NgCommand implements Serializable {
 
     private final NgCommandType ngCommandType;
-    private final Map<String, String> parameters;
+    private final Map<String, Object> parameters;
     private final String cookie;
 
     public static final String COMMAND_ARG = "command";
 
-    private NgCommand(NgCommandType ngCommandType, Map<String, String> parameters, String cookie) {
+    private NgCommand(NgCommandType ngCommandType, Map<String, Object> parameters, String cookie) {
         this.ngCommandType = ngCommandType;
         this.parameters = parameters;
         this.cookie = cookie;
@@ -32,11 +32,11 @@ public class NgCommand implements Serializable {
     public static class Builder {
 
         private NgCommandType ngCommandType;
-        private Map<String, String> parameters;
+        private Map<String, Object> parameters;
         private String cookie;
 
         public Builder() {
-            parameters = new HashMap<String, String>(20);
+            parameters = new HashMap<String, Object>(20);
         }
 
         public final NgCommand build() throws IllegalArgumentException {
@@ -58,7 +58,7 @@ public class NgCommand implements Serializable {
             return this;
         }
 
-        public Builder setParameter(final String key, final String value) {
+        public Builder setParameter(final String key, final Object value) {
             parameters.put(key, value);
             return this;
         }
@@ -78,7 +78,7 @@ public class NgCommand implements Serializable {
         return ngCommandType;
     }
 
-    public Map<String, String> getParameters() {
+    public Map<String, Object> getParameters() {
         return parameters;
     }
 

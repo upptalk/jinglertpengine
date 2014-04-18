@@ -32,15 +32,22 @@ class NgClientHandler extends SimpleChannelInboundHandler<DatagramPacket> {
     public void messageReceived(ChannelHandlerContext ctx, DatagramPacket msg) throws Exception {
         final String response = msg.content().toString(CharsetUtil.UTF_8);
         if (log.isDebugEnabled()) {
-            log.debug("Message received: "+response);
+            log.debug("Message received1: "+response);
         }
-        final NgResult result = NgResult.fromBencode(new ByteArrayInputStream(response.getBytes()));
-        if (getListeners() != null) {
-            for (NgResultListener listener: getListeners()) {
-                listener.receive(result);
+        try {
+            final NgResult result = NgResult.fromBencode(new ByteArrayInputStream(response.getBytes()));
+            if (log.isDebugEnabled()) {
+                log.debug("Message received2: "+result.toString());
             }
-        } else {
-            log.warn("Found not listeners to handle income messages from media proxy server");
+            if (getListeners() != null) {
+                for (NgResultListener listener: getListeners()) {
+                    listener.receive(result);
+                }
+            } else {
+                log.warn("Found not listeners to handle incoming messages from media proxy server");
+            }
+        } catch (Exception e) {
+            log.error("Error receiving/parsing message ", e);
         }
     }
 

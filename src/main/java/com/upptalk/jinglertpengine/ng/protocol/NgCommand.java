@@ -100,10 +100,15 @@ public class NgCommand implements Serializable {
         String cmd = null;
 
         for (Object entry: map.values()) {
-            Map m = (Map)entry;
-            cmd = (String) m.get(COMMAND_ARG);
-            if (cmd != null) {
-                break;
+            if (entry instanceof Map) {
+                Map m = (Map)entry;
+                cmd = (String) m.get(COMMAND_ARG);
+                for (Object key: m.keySet()) {
+                    Object value = m.get(key);
+                    if (key instanceof String && value instanceof String) {
+                        builder.setParameter((String)key, (String)value);
+                    }
+                }
             }
         }
 

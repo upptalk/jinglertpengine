@@ -94,6 +94,10 @@ public class JingleChannelSessionManager implements NgResultListener {
                     getChannelProcessor().sendChannelError(s.getRequestIQ(), result.getParameters().get("result"));
                 } else /*NgResultType.ok*/ {
                     try {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Offer SDP: " + result.getParameters().get("sdp"));
+                        }
+
                         sendAnswerRequest(s);
                     } catch (Exception e) {
                         log.error("Error sending answer message", e);
@@ -109,6 +113,11 @@ public class JingleChannelSessionManager implements NgResultListener {
                     getChannelProcessor().sendChannelError(s.getRequestIQ(), result.getParameters().get("result"));
                 } else /*NgResultType.ok*/ {
                     try {
+
+                        if (log.isDebugEnabled()) {
+                            log.debug("Answer SDP: " + result.getParameters().get("sdp"));
+                        }
+
                         String host = null;
                         String protocol = null;
                         Integer locaPort = null;

@@ -8,6 +8,7 @@ import com.upptalk.jinglertpengine.ng.protocol.NgCommandType;
 import com.upptalk.jinglertpengine.ng.protocol.NgResult;
 import com.upptalk.jinglertpengine.ng.protocol.NgResultType;
 import com.upptalk.jinglertpengine.util.RandomString;
+import com.upptalk.jinglertpengine.util.Sdp;
 import com.upptalk.jinglertpengine.util.SdpUtil;
 import com.upptalk.jinglertpengine.xmpp.tinder.JingleChannelIQ;
 import org.apache.log4j.Logger;
@@ -113,16 +114,25 @@ public class JingleChannelSessionManager implements NgResultListener {
                     getChannelProcessor().sendChannelError(s.getRequestIQ(), result.getParameters().get("result"));
                 } else /*NgResultType.ok*/ {
                     try {
-
                         if (log.isDebugEnabled()) {
                             log.debug("Answer SDP: " + result.getParameters().get("sdp"));
                         }
+                        try {
+                            Sdp offerSdp = new Sdp(s.getOfferResult().getParameters().get("sdp"));
+                            Sdp answerSdp = new Sdp(s.getAnswerResult().getParameters().get("sdp"));
+                            String host = answerSdp.getConnectionAddress();
+                            String protocol = s.getRequestIQ().getJingleChannel().getProtocol();
+                            Integer locaPort = offerSdp.getMediaPort();
+                            Integer remotePort = answerSdp.getMediaPort();
+                            getChannelProcessor().sendChannelResult(s.getRequestIQ(),
+                                    host, protocol, locaPort, remotePort);
+                        } catch (Exception e) {
+                            getChannelProcessor().sendChannelError(s.getRequestIQ(),
+                                    "Error extracting SDP data");
+                            log.debug("Exception extracting SDP data", e);
+                        }
 
-                        String host = null;
-                        String protocol = null;
-                        Integer locaPort = null;
-                        Integer remotePort = null; //fill values with result
-                        getChannelProcessor().sendChannelResult(s.getRequestIQ(), host, protocol, locaPort, remotePort);
+
                     } catch (Exception e) {
                         log.error("Error sending channel result", e);
                     }

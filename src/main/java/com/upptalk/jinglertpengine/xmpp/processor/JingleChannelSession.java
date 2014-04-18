@@ -1,7 +1,8 @@
 package com.upptalk.jinglertpengine.xmpp.processor;
 
+import com.upptalk.jinglertpengine.ng.protocol.NgCommand;
+import com.upptalk.jinglertpengine.ng.protocol.NgResult;
 import com.upptalk.jinglertpengine.xmpp.tinder.JingleChannelIQ;
-import org.xmpp.packet.IQ;
 
 import java.io.Serializable;
 
@@ -17,9 +18,14 @@ public class JingleChannelSession implements Serializable {
     private final String id;
     private final JingleChannelIQ requestIQ;
     private JingleChannelIQ responseIQ;
+    private NgCommand offerRequest;
+    private NgResult offerResult;
+    private NgCommand answerRequest;
+    private NgResult answerResult;
+
     private final long timestamp = System.currentTimeMillis();
 
-    private JingleChannelSession(String id, JingleChannelIQ requestIQ) {
+    public JingleChannelSession(String id, JingleChannelIQ requestIQ) {
         this.id = id;
         this.requestIQ = requestIQ;
     }
@@ -32,7 +38,7 @@ public class JingleChannelSession implements Serializable {
         return timestamp;
     }
 
-    public IQ getRequestIQ() {
+    public JingleChannelIQ getRequestIQ() {
         return requestIQ;
     }
 
@@ -44,21 +50,35 @@ public class JingleChannelSession implements Serializable {
         this.responseIQ = responseIQ;
     }
 
-
-    /**
-     * Creates a new Jingle Relay Channel Session
-     *
-     * @param id
-     * @param requestIQ
-     * @return The Channel Relay Session
-     */
-    public static JingleChannelSession create(String id, JingleChannelIQ requestIQ) {
-
-        JingleChannelSession s = new JingleChannelSession(id, requestIQ);
-
-
-
-        return s;
+    public NgCommand getOfferRequest() {
+        return offerRequest;
     }
 
+    public void setOfferRequest(NgCommand offerRequest) {
+        this.offerRequest = offerRequest;
+    }
+
+    public NgResult getOfferResult() {
+        return offerResult;
+    }
+
+    public void setOfferResult(NgResult offerResult) {
+        this.offerResult = offerResult;
+    }
+
+    public NgCommand getAnswerRequest() {
+        return answerRequest;
+    }
+
+    public void setAnswerRequest(NgCommand answerRequest) {
+        this.answerRequest = answerRequest;
+    }
+
+    public NgResult getAnswerResult() {
+        return answerResult;
+    }
+
+    public void setAnswerResult(NgResult answerResult) {
+        this.answerResult = answerResult;
+    }
 }

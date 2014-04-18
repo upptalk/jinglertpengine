@@ -24,6 +24,8 @@
 
 package com.upptalk.jinglertpengine.xmpp.processor;
 
+import com.upptalk.jinglertpengine.ng.NgClient;
+import com.upptalk.jinglertpengine.util.RandomString;
 import com.upptalk.jinglertpengine.xmpp.component.ExternalComponent;
 import com.upptalk.jinglertpengine.xmpp.component.NamespaceProcessor;
 import com.upptalk.jinglertpengine.xmpp.jinglenodes.JingleChannel;
@@ -31,6 +33,7 @@ import com.upptalk.jinglertpengine.xmpp.tinder.JingleChannelIQ;
 import org.apache.log4j.Logger;
 import org.springframework.util.Assert;
 import org.xmpp.packet.IQ;
+import org.xmpp.packet.PacketError;
 
 /**
  * Jingle RTPEngine processor
@@ -40,8 +43,7 @@ import org.xmpp.packet.IQ;
 public class JingleChannelProcessor implements NamespaceProcessor {
 
     final static Logger log = Logger.getLogger(JingleChannelProcessor.class);
-    private ExternalComponent externalComponent;
-    private String localIp;
+    private final ExternalComponent externalComponent;
     private final JingleChannelSessionManager sessionManager;
 
     private static final int DEFAULT_RTP_LOCAL_PORT_START = 10000;
@@ -50,9 +52,11 @@ public class JingleChannelProcessor implements NamespaceProcessor {
     private int rtpStartPort = DEFAULT_RTP_LOCAL_PORT_START;
     private int rtpEndPort = DEFAULT_RTP_LOCAL_PORT_END;
 
-    public JingleChannelProcessor(final JingleChannelSessionManager sessionManager) {
-        Assert.notNull(sessionManager);
-        this.sessionManager = sessionManager;
+    public JingleChannelProcessor(final ExternalComponent externalComponent, final NgClient ngClient) {
+        Assert.notNull(ngClient);
+        Assert.notNull(externalComponent);
+        this.externalComponent = externalComponent;
+        this.sessionManager = new JingleChannelSessionManager(this, ngClient);
     }
 
     public void init() {
@@ -73,22 +77,46 @@ public class JingleChannelProcessor implements NamespaceProcessor {
         try {
             iq = JingleChannelIQ.fromXml(xmppIQ);
             JingleChannelSession session = sessionManager.createSession(iq.getID(), iq);
-            processJingleChannel(session);
+
         } catch (JingleChannelException e) {
             log.error("Error Processing Jingle Channel request", e);
         } catch (Throwable e) {
             log.error("Severe Error Processing Jingle channel: " + xmppIQ, e);
         }
 
-        //should be return by JingleChannelSessionManager
+        //should be returned by JingleChannelSessionManager
         return null;//IQ.createResultIQ(iq);
 
     }
 
-    private void processJingleChannel(final JingleChannelSession session) throws JingleChannelException {
+    /**
+     * Send an error result to requester
+     * @param request
+     * @param error
+     * @return created result IQ
+     */
+    public IQ sendChannelError(JingleChannelIQ request, String error) {
+        IQ iq = JingleChannelIQ.createErrorResult(request, PacketError.Condition.internal_server_error,
+                error);
+        getExternalComponent().send(iq);
+        return iq;
+    }
 
-        //TODO
-
+    /**
+     * Send the channel IQ result to requester
+     * @param request
+     * @param host
+     * @param protocol
+     * @param localPort
+     * @param remotePort
+     * @return
+     */
+    public JingleChannelIQ sendChannelResult(JingleChannelIQ request, String host,
+                                  String protocol, Integer localPort, Integer remotePort) {
+        JingleChannelIQ iq = JingleChannelIQ.createResult(request, host, protocol,
+                localPort, remotePort, RandomString.getCookie());
+        getExternalComponent().send(iq);
+        return iq;
     }
 
     @Override
@@ -117,20 +145,8 @@ public class JingleChannelProcessor implements NamespaceProcessor {
         return JingleChannel.XMLNS;
     }
 
-    public void setExternalComponent(ExternalComponent externalComponent) {
-        this.externalComponent = externalComponent;
-    }
-
     public ExternalComponent getExternalComponent() {
         return externalComponent;
-    }
-
-    public String getLocalIp() {
-        return localIp;
-    }
-
-    public void setLocalIp(String localIp) {
-        this.localIp = localIp;
     }
 
     public int getRtpStartPort() {

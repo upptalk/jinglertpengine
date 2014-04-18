@@ -63,7 +63,7 @@ public class JingleChannel {
     @XmlAttribute
     private String id;
 
-    public JingleChannel(String protocol, String host, int localport, int remoteport, String id) {
+    public JingleChannel(String protocol, String host, Integer localport, Integer remoteport, String id) {
         this.protocol = protocol;
         this.host = host;
         this.localport = localport;

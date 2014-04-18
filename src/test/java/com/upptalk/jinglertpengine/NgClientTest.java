@@ -8,8 +8,6 @@ import com.upptalk.jinglertpengine.ng.protocol.NgResult;
 import org.eclipse.jetty.util.BlockingArrayQueue;
 
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
 /**
@@ -30,15 +28,12 @@ public class NgClientTest {
 
             NgClient client = new NgClient();
             client.setServers(new InetSocketAddress("localhost", 2223));
-
-            List<NgResultListener> listeners = new ArrayList<>();
-            listeners.add(new NgResultListener() {
+            client.getResultListeners().add(new NgResultListener() {
                 @Override
                 public void receive(NgResult result) {
                     queue.offer(result);
                 }
             });
-            client.setResultListeners(listeners);
             long init = System.currentTimeMillis();
 
             for (int i=1; i<=N; i++) {

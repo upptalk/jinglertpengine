@@ -8,7 +8,6 @@ import com.upptalk.jinglertpengine.ng.protocol.NgResultType;
 import com.upptalk.jinglertpengine.util.NamingThreadFactory;
 import com.upptalk.jinglertpengine.util.RandomString;
 import org.apache.log4j.Logger;
-import org.springframework.beans.factory.annotation.Required;
 import org.springframework.util.Assert;
 
 import java.net.InetSocketAddress;
@@ -25,21 +24,21 @@ import java.util.concurrent.*;
 public class ChannelStatsManager implements NgResultListener, NgCommandListener {
 
     private static final Logger log = Logger.getLogger(ChannelStatsManager.class);
-    public static final long DEFAULT_CHANNEL_TIMEOUT_VALUE = 20000;
-    public static final long DEFAULT_CHANNEL_AVAILABLE_TASK_DELAY_VALUE = 60000;
-    public static final int DEFAULT_TIMEOUT_THREAD_POOL_VALUE = 5;
     private final Map<InetSocketAddress, ChannelStats> channelStats;
     private final Map<String, Entry> pendingMessages;
     private final Map<String, Future> timeoutTasks;
-    private NgClient ngClient;
-    private long channelTimeout = DEFAULT_CHANNEL_TIMEOUT_VALUE;
+    private final NgClient ngClient;
+    private final long channelTimeout;
     private final long channelAvailableTaskDelay;
     private final int timeoutTaskThreadPoolSize;
     private final ScheduledExecutorService service;
 
 
-    public ChannelStatsManager(long channelAvailableTaskDelay, int timeoutTaskThreadPoolSize) {
+    public ChannelStatsManager(NgClient ngClient, long channelAvailableTaskDelay,
+                               long channelTimeout, int timeoutTaskThreadPoolSize) {
+        this.ngClient = ngClient;
         this.channelAvailableTaskDelay = channelAvailableTaskDelay;
+        this.channelTimeout = channelTimeout;
         this.timeoutTaskThreadPoolSize = timeoutTaskThreadPoolSize;
         channelStats = new ConcurrentHashMap<InetSocketAddress, ChannelStats>();
         pendingMessages = new ConcurrentLinkedHashMap.Builder().maximumWeightedCapacity(10000).build();
@@ -48,10 +47,8 @@ public class ChannelStatsManager implements NgResultListener, NgCommandListener 
                 new NamingThreadFactory("TimeoutTask"));
         service.scheduleAtFixedRate(new ChannelKeepAliveTask(), 0,
                 getChannelAvailableTaskDelay(), TimeUnit.MILLISECONDS);
-    }
-
-    public ChannelStatsManager() {
-        this(DEFAULT_CHANNEL_AVAILABLE_TASK_DELAY_VALUE, DEFAULT_TIMEOUT_THREAD_POOL_VALUE);
+        ngClient.getResultListeners().add(this);
+        ngClient.getCommandListeners().add(this);
     }
 
     // controls timed out commands
@@ -66,10 +63,11 @@ public class ChannelStatsManager implements NgResultListener, NgCommandListener 
         @Override
         public void run() {
             Assert.notNull(getNgClient());
+            int i = 0;
             for (NgResultListener listener: ngClient.getResultListeners()) {
                 try {
                     if (log.isDebugEnabled()) {
-                        log.debug("Timed out command: " + entry.getCommand());
+                        log.debug("Timed out command[" + i++ + "]: " + entry.getCommand());
                     }
                     final NgResult timeout = NgResult.builder().
                             setCookie(entry.getCommand().getCookie()).
@@ -216,10 +214,6 @@ public class ChannelStatsManager implements NgResultListener, NgCommandListener 
         return channelTimeout;
     }
 
-    public void setChannelTimeout(long channelTimeout) {
-        this.channelTimeout = channelTimeout;
-    }
-
     public long getChannelAvailableTaskDelay() {
         return channelAvailableTaskDelay;
     }
@@ -230,11 +224,6 @@ public class ChannelStatsManager implements NgResultListener, NgCommandListener 
 
     public NgClient getNgClient() {
         return ngClient;
-    }
-
-    @Required
-    public void setNgClient(NgClient ngClient) {
-        this.ngClient = ngClient;
     }
 
     /**

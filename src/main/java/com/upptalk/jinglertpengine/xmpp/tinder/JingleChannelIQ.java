@@ -8,6 +8,7 @@ import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.xmpp.packet.IQ;
+import org.xmpp.packet.PacketError;
 
 import java.io.StringReader;
 
@@ -67,18 +68,33 @@ public class JingleChannelIQ extends XStreamIQ<JingleChannel> {
      * @return
      */
     public static JingleChannelIQ createResult(final JingleChannelIQ iq, String host, String protocol,
-                                               int localport, int remoteport) {
-        final JingleChannel j = new JingleChannel(protocol, host, localport, remoteport, iq.getID());
+                                               Integer localport, Integer remoteport, String channelId) {
+        final JingleChannel j = new JingleChannel(protocol, host, localport, remoteport, channelId);
 
         final JingleChannelIQ jingleChannelIQ = new JingleChannelIQ(j);
-        jingleChannelIQ.setTo(iq.getTo());
-        jingleChannelIQ.setFrom(iq.getFrom());
+        jingleChannelIQ.setTo(iq.getFrom());
+        jingleChannelIQ.setFrom(iq.getTo());
         jingleChannelIQ.setID(iq.getID());
         jingleChannelIQ.setType(iq.getType());
 
         return jingleChannelIQ;
 
     }
+
+    /**
+     * Creates an IQ error result in case channel can't be allocated
+     *
+     * @param iq Original request IQ
+     * @param condition Error condition
+     * @param error Error description
+     * @return Result IQ
+     */
+    public static IQ createErrorResult(JingleChannelIQ iq, PacketError.Condition condition, String error) {
+        IQ result = IQ.createResultIQ(iq);
+        result.setError(new PacketError(condition, PacketError.Type.cancel, error));
+        return result;
+    };
+
 
     public static JingleChannelIQ clone(final JingleChannelIQ iq) {
         final JingleChannelIQ jingleChannelIQ = new JingleChannelIQ(iq.getJingleChannel());
@@ -92,4 +108,6 @@ public class JingleChannelIQ extends XStreamIQ<JingleChannel> {
     public JingleChannel getJingleChannel() {
         return jingleChannel;
     }
+
+
 }

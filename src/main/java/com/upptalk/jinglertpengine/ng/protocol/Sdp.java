@@ -1,4 +1,6 @@
-package com.upptalk.jinglertpengine.util;
+package com.upptalk.jinglertpengine.ng.protocol;
+
+import java.io.Serializable;
 
 /**
  * SDP Session Description Protocol
@@ -7,7 +9,7 @@ package com.upptalk.jinglertpengine.util;
  *         Date: 4/18/14
  *         Time: 5:42 PM
  */
-public class Sdp {
+public class Sdp implements Serializable {
 
     private String sessionName; // s=
     private String originUsername; // o=[0]

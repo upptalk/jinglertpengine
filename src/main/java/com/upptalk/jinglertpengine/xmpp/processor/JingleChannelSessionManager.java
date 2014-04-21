@@ -8,7 +8,6 @@ import com.upptalk.jinglertpengine.ng.protocol.NgCommandType;
 import com.upptalk.jinglertpengine.ng.protocol.NgResult;
 import com.upptalk.jinglertpengine.ng.protocol.NgResultType;
 import com.upptalk.jinglertpengine.util.RandomString;
-import com.upptalk.jinglertpengine.util.Sdp;
 import com.upptalk.jinglertpengine.util.SdpUtil;
 import com.upptalk.jinglertpengine.xmpp.tinder.JingleChannelIQ;
 import org.apache.log4j.Logger;
@@ -95,10 +94,6 @@ public class JingleChannelSessionManager implements NgResultListener {
                     getChannelProcessor().sendChannelError(s.getRequestIQ(), result.getParameters().get("result"));
                 } else /*NgResultType.ok*/ {
                     try {
-                        if (log.isDebugEnabled()) {
-                            log.debug("Offer SDP: " + result.getParameters().get("sdp"));
-                        }
-
                         sendAnswerRequest(s);
                     } catch (Exception e) {
                         log.error("Error sending answer message", e);
@@ -114,16 +109,11 @@ public class JingleChannelSessionManager implements NgResultListener {
                     getChannelProcessor().sendChannelError(s.getRequestIQ(), result.getParameters().get("result"));
                 } else /*NgResultType.ok*/ {
                     try {
-                        if (log.isDebugEnabled()) {
-                            log.debug("Answer SDP: " + result.getParameters().get("sdp"));
-                        }
                         try {
-                            Sdp offerSdp = new Sdp(s.getOfferResult().getParameters().get("sdp"));
-                            Sdp answerSdp = new Sdp(s.getAnswerResult().getParameters().get("sdp"));
-                            String host = answerSdp.getConnectionAddress();
+                            String host = s.getAnswerResult().getSdp().getConnectionAddress();
                             String protocol = s.getRequestIQ().getJingleChannel().getProtocol();
-                            Integer locaPort = offerSdp.getMediaPort();
-                            Integer remotePort = answerSdp.getMediaPort();
+                            Integer locaPort = s.getOfferResult().getSdp().getMediaPort();
+                            Integer remotePort = s.getAnswerResult().getSdp().getMediaPort();
                             getChannelProcessor().sendChannelResult(s.getRequestIQ(),
                                     host, protocol, locaPort, remotePort);
                         } catch (Exception e) {
@@ -140,6 +130,7 @@ public class JingleChannelSessionManager implements NgResultListener {
             }
 
         } else {
+            getChannelProcessor().sendChannelError(s.getRequestIQ(), result.getParameters().get("result"));
             log.warn("Couldn't find channel session for cookie: " + result.getCookie());
         }
     }

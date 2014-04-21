@@ -1,6 +1,6 @@
 package com.upptalk.jinglertpengine;
 
-import com.upptalk.jinglertpengine.util.Sdp;
+import com.upptalk.jinglertpengine.ng.protocol.Sdp;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

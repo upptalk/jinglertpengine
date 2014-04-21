@@ -20,13 +20,16 @@ public class NgResult implements Serializable {
     private final NgResultType ngResultType;
     private final Map<String, String> parameters;
     private final String cookie;
+    private final Sdp sdp;
 
     public static final String RESULT_ARG = "result";
+    public static final String SDP_ARG = "sdp";
 
-    private NgResult(NgResultType ngResultType, Map<String, String> parameters, String cookie) {
+    private NgResult(NgResultType ngResultType, Map<String, String> parameters, String cookie, Sdp sdp) {
         this.ngResultType = ngResultType;
         this.parameters = parameters;
         this.cookie = cookie;
+        this.sdp = sdp;
     }
 
     public static class Builder {
@@ -34,6 +37,7 @@ public class NgResult implements Serializable {
         private NgResultType ngResultType;
         private Map<String, String> parameters;
         private String cookie;
+        private Sdp sdp;
 
         public Builder() {
             parameters = new HashMap<String, String>(20);
@@ -49,7 +53,8 @@ public class NgResult implements Serializable {
                 throw new IllegalArgumentException("Property cookie is required!");
             }
 
-            return new NgResult(this.ngResultType, Collections.unmodifiableMap(this.parameters), this.cookie);
+            return new NgResult(this.ngResultType, Collections.unmodifiableMap(this.parameters),
+                    this.cookie, this.sdp);
         }
 
         public Builder setNgResultType(NgResultType ngResultType) {
@@ -65,6 +70,11 @@ public class NgResult implements Serializable {
 
         public Builder setCookie(String cookie) {
             this.cookie = cookie;
+            return this;
+        }
+
+        public Builder setSdp(Sdp sdp) {
+            this.sdp = sdp;
             return this;
         }
 
@@ -86,6 +96,10 @@ public class NgResult implements Serializable {
         return cookie;
     }
 
+    public Sdp getSdp() {
+        return sdp;
+    }
+
     public String toBencode() throws Exception {
         return this.cookie + " " +Bencode.encode(this.getParameters());
     }
@@ -98,16 +112,19 @@ public class NgResult implements Serializable {
         Map map = Bencode.decode(inputStream);
 
         String cmd = null;
+        String sdp = null;
+
+        System.out.println("** MAP: " + map); //TODO REMOVE
 
         for (Object entry: map.values()) {
+            System.out.println("** Entry: " +entry);
             if (entry instanceof Map) {
                 Map m = (Map)entry;
-                cmd = (String) m.get(RESULT_ARG);
-                for (Object key: m.keySet()) {
-                    Object value = m.get(key);
-                    if (key instanceof String && value instanceof String) {
-                        builder.setParameter((String)key, (String)value);
-                    }
+                if (m.containsKey(RESULT_ARG)) {
+                    cmd = (String) m.get(RESULT_ARG);
+                }
+                if (m.containsKey(SDP_ARG)) {
+                    sdp = (String) m.get(SDP_ARG);
                 }
             }
         }
@@ -118,6 +135,9 @@ public class NgResult implements Serializable {
 
         builder.setNgResultType(NgResultType.valueOf(cmd.replace("_", "")));
         builder.setCookie(cookie);
+        if (sdp != null) {
+            builder.setSdp(new Sdp(sdp));
+        }
 
         return builder.build();
     }
@@ -154,6 +174,7 @@ public class NgResult implements Serializable {
                 "ngResultType=" + ngResultType +
                 ", parameters=" + parameters +
                 ", cookie='" + cookie + '\'' +
+                ", sdp=" + sdp +
                 '}';
     }
 }

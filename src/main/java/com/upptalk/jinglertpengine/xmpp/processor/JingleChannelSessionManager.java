@@ -7,6 +7,7 @@ import com.upptalk.jinglertpengine.ng.protocol.NgCommand;
 import com.upptalk.jinglertpengine.ng.protocol.NgCommandType;
 import com.upptalk.jinglertpengine.ng.protocol.NgResult;
 import com.upptalk.jinglertpengine.ng.protocol.NgResultType;
+import com.upptalk.jinglertpengine.util.NamingThreadFactory;
 import com.upptalk.jinglertpengine.util.RandomString;
 import com.upptalk.jinglertpengine.util.SdpUtil;
 import com.upptalk.jinglertpengine.xmpp.tinder.JingleChannelIQ;
@@ -16,6 +17,8 @@ import org.springframework.util.Assert;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * Jingle Channel Session Manager
@@ -42,6 +45,8 @@ public class JingleChannelSessionManager implements NgResultListener {
     private final ConcurrentLinkedHashMap<String, JingleChannelSession> sessions;
     private final ConcurrentLinkedHashMap<String, JingleChannelSession> sessionsByCookie;
 
+    private final ScheduledExecutorService scheduledService;
+
     public JingleChannelSessionManager(final JingleChannelProcessor channelProcessor, final NgClient ngClient) {
         Assert.notNull(channelProcessor);
         Assert.notNull(ngClient);
@@ -51,6 +56,7 @@ public class JingleChannelSessionManager implements NgResultListener {
                 maximumWeightedCapacity(SESSION_MAX_ENTRIES).build();
         sessionsByCookie = new ConcurrentLinkedHashMap.Builder().
                 maximumWeightedCapacity(SESSION_MAX_ENTRIES).build();
+        scheduledService = Executors.newSingleThreadScheduledExecutor(new NamingThreadFactory("ChannelKillTask"));
         ngClient.getResultListeners().add(this);
     }
 
@@ -71,6 +77,14 @@ public class JingleChannelSessionManager implements NgResultListener {
         return s;
     }
 
+    /**
+     * Retrieve a channel session
+     *
+     * @param id Id given for creating the session
+     *
+     * @return the channel session
+     * @throws JingleChannelException
+     */
     public JingleChannelSession getSession(String id) throws JingleChannelException {
         final JingleChannelSession s = sessions.get(id);
         if (s == null) {
@@ -79,10 +93,23 @@ public class JingleChannelSessionManager implements NgResultListener {
         return s;
     };
 
+    /**
+     * Destroy a channel session
+     *
+     * @param id Id given for creating the session
+     * @return the destroyed channel session
+     */
+    public JingleChannelSession destroySession(String id) {
+
+        JingleChannelSession s = sessions.remove(id);
+
+        return s;
+    };
+
     @Override
     public void receive(NgResult result) {
 
-        final JingleChannelSession s = sessionsByCookie.get(result.getCookie());
+        final JingleChannelSession s = sessionsByCookie.remove(result.getCookie());
         if (s != null) {
             if (s.getOfferRequest() != null && s.getOfferRequest().getCookie().equals(result.getCookie())) {
                 s.setOfferResult(result);
@@ -110,6 +137,11 @@ public class JingleChannelSessionManager implements NgResultListener {
                 } else /*NgResultType.ok*/ {
                     try {
                         try {
+                            if (log.isDebugEnabled()) {
+                                log.debug("** SDP: " + s.getAnswerResult().getSdp().getConnectionAddress() + " \n " +
+                                " " + s.getRequestIQ().getJingleChannel().getProtocol());
+                            }
+
                             String host = s.getAnswerResult().getSdp().getConnectionAddress();
                             String protocol = s.getRequestIQ().getJingleChannel().getProtocol();
                             Integer locaPort = s.getOfferResult().getSdp().getMediaPort();
@@ -121,12 +153,12 @@ public class JingleChannelSessionManager implements NgResultListener {
                                     "Error extracting SDP data");
                             log.debug("Exception extracting SDP data", e);
                         }
-
-
                     } catch (Exception e) {
                         log.error("Error sending channel result", e);
                     }
                 }
+            } else {
+                log.warn("Don't know how to handle response: " + result);
             }
 
         } else {
@@ -135,6 +167,7 @@ public class JingleChannelSessionManager implements NgResultListener {
         }
     }
 
+    // Send offer with sdp
     private void sendOfferRequest(final JingleChannelSession s) throws Exception {
         final String cookie = RandomString.getCookie();
         final NgCommand offer = NgCommand.builder().
@@ -143,7 +176,7 @@ public class JingleChannelSessionManager implements NgResultListener {
                 setParameter("call-id", s.getRequestIQ().getID()).
                 setParameter("from-tag", SdpUtil.getFakeFromTag(s.getRequestIQ())).
                 setParameter("flags", flags).
-                setParameter("sdp", SdpUtil.fakeSdp).
+                setParameter("sdp", SdpUtil.fakeSdp.toString()).
                 build();
         sessionsByCookie.put(cookie, s);
         ngClient.send(offer, s.getRequestIQ().getFrom().getNode());
@@ -154,6 +187,7 @@ public class JingleChannelSessionManager implements NgResultListener {
 
     }
 
+    //Send answer with sdp
     private void sendAnswerRequest(final JingleChannelSession s) throws Exception {
         final String cookie = RandomString.getCookie();
         final NgCommand answer = NgCommand.builder().
@@ -163,13 +197,43 @@ public class JingleChannelSessionManager implements NgResultListener {
                 setParameter("from-tag", SdpUtil.getFakeFromTag(s.getRequestIQ())).
                 setParameter("to-tag", SdpUtil.getFakeToTag(s.getRequestIQ())).
                 setParameter("flags", flags).
-                setParameter("sdp", SdpUtil.fakeSdp).
+                setParameter("sdp", SdpUtil.fakeSdp.toString()).
                 build();
         sessionsByCookie.put(cookie, s);
         ngClient.send(answer, s.getRequestIQ().getFrom().getNode());
         s.setAnswerRequest(answer);
         if (log.isDebugEnabled()) {
             log.debug("Sent answer command: " + answer);
+        }
+    }
+
+    //Send channel query request
+    private void sendQueryRequest(final JingleChannelSession s) throws Exception {
+        final String cookie = RandomString.getCookie();
+        final NgCommand query = NgCommand.builder().
+                setCookie(cookie).
+                setNgCommandType(NgCommandType.query).
+                setParameter("call-id", s.getRequestIQ().getID()).
+                build();
+        sessionsByCookie.put(cookie, s);
+        ngClient.send(query, s.getRequestIQ().getFrom().getNode());
+        s.setAnswerRequest(query);
+        if (log.isDebugEnabled()) {
+            log.debug("Sent query command: " + query);
+        }
+    }
+
+    static class ChannelKillTask implements Runnable {
+
+        final JingleChannelSession session;
+
+        ChannelKillTask(JingleChannelSession session) {
+            this.session = session;
+        }
+
+        @Override
+        public void run() {
+
         }
     }
 

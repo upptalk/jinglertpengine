@@ -114,10 +114,7 @@ public class NgResult implements Serializable {
         String cmd = null;
         String sdp = null;
 
-        System.out.println("** MAP: " + map); //TODO REMOVE
-
         for (Object entry: map.values()) {
-            System.out.println("** Entry: " +entry);
             if (entry instanceof Map) {
                 Map m = (Map)entry;
                 if (m.containsKey(RESULT_ARG)) {
@@ -136,7 +133,7 @@ public class NgResult implements Serializable {
         builder.setNgResultType(NgResultType.valueOf(cmd.replace("_", "")));
         builder.setCookie(cookie);
         if (sdp != null) {
-            builder.setSdp(new Sdp(sdp));
+            builder.setSdp(Sdp.fromSdp(sdp));
         }
 
         return builder.build();

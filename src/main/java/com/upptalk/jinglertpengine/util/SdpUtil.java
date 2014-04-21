@@ -1,5 +1,6 @@
 package com.upptalk.jinglertpengine.util;
 
+import com.upptalk.jinglertpengine.ng.protocol.Sdp;
 import org.xmpp.packet.IQ;
 
 /**
@@ -11,15 +12,7 @@ import org.xmpp.packet.IQ;
  */
 public class SdpUtil {
 
-    public static final String fakeSdp =
-            "v=0\r\n" +
-            "o=root 123 123 IN IP4 127.0.0.1\r\n" +
-            "s=stream\r\n" +
-            "c=IN IP4 127.0.0.1 \r\n" +
-            "t=0 0 \r\n" +
-            "m=audio 49170 RTP/AVP 0 97\r\n" +
-            "a=rtpmap:97 iLBC/8000\r\n" +
-            "a=sendrecv";
+    public static final Sdp fakeSdp = Sdp.createTwoAudioRtpIp4Basic("127.0.0.1", "127.0.0.1", 49100);
 
     /**
      * Generates a fake sip from-tag

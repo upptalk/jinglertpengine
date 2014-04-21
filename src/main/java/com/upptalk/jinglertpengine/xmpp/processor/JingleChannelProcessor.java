@@ -76,8 +76,7 @@ public class JingleChannelProcessor implements NamespaceProcessor {
         }
         try {
             iq = JingleChannelIQ.fromXml(xmppIQ);
-            JingleChannelSession session = sessionManager.createSession(iq.getID(), iq);
-
+            sessionManager.createSession(iq.getID(), iq);
         } catch (JingleChannelException e) {
             log.error("Error Processing Jingle Channel request", e);
         } catch (Throwable e) {

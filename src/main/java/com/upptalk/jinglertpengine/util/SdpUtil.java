@@ -12,7 +12,17 @@ import org.xmpp.packet.IQ;
  */
 public class SdpUtil {
 
-    public static final Sdp fakeSdp = Sdp.createTwoAudioRtpIp4Basic("127.0.0.1", "127.0.0.1", 49100);
+    public static final Sdp fakeSdpOffer = Sdp.createTwoAudioRtpIp4Basic("127.0.0.1", "127.0.0.1", 20000);
+    public static final Sdp fakeSdpAnswer = Sdp.createTwoAudioRtpIp4Basic("127.0.0.1", "127.0.0.1", 20002);
+    public static final String fakeSdp2 =
+            "v=0\r\n" +
+            "o=root 123 123 IN IP4 127.0.0.1\r\n" +
+            "s=stream\r\n" +
+            "c=IN IP4 127.0.0.1\r\n" +
+            "t=0 0\r\n" +
+            "m=audio 49170 RTP/AVP 0 97\r\n" +
+            "a=rtpmap:97 iLBC/8000\r\n" +
+            "a=sendrecv";
 
     /**
      * Generates a fake sip from-tag

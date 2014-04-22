@@ -45,18 +45,21 @@ public class JingleChannelProcessor implements NamespaceProcessor {
     final static Logger log = Logger.getLogger(JingleChannelProcessor.class);
     private final ExternalComponent externalComponent;
     private final JingleChannelSessionManager sessionManager;
-
+    private static final long DEFAULT_KEEP_ALIVE_TASK_DELAY = 30000;
     private static final int DEFAULT_RTP_LOCAL_PORT_START = 10000;
     private static final int DEFAULT_RTP_LOCAL_PORT_END = 60000;
 
     private int rtpStartPort = DEFAULT_RTP_LOCAL_PORT_START;
     private int rtpEndPort = DEFAULT_RTP_LOCAL_PORT_END;
 
+    private long channelKeepAliveTaskDelay = DEFAULT_KEEP_ALIVE_TASK_DELAY;
+
     public JingleChannelProcessor(final ExternalComponent externalComponent, final NgClient ngClient) {
         Assert.notNull(ngClient);
         Assert.notNull(externalComponent);
         this.externalComponent = externalComponent;
         this.sessionManager = new JingleChannelSessionManager(this, ngClient);
+        this.sessionManager.setChannelKeepAliveTaskDelay(getChannelKeepAliveTaskDelay());
     }
 
     public void init() {
@@ -166,5 +169,14 @@ public class JingleChannelProcessor implements NamespaceProcessor {
 
     public JingleChannelSessionManager getSessionManager() {
         return sessionManager;
+    }
+
+    public long getChannelKeepAliveTaskDelay() {
+        return channelKeepAliveTaskDelay;
+    }
+
+    public void setChannelKeepAliveTaskDelay(long channelKeepAliveTaskDelay) {
+        this.channelKeepAliveTaskDelay = channelKeepAliveTaskDelay;
+        this.sessionManager.setChannelKeepAliveTaskDelay(getChannelKeepAliveTaskDelay());
     }
 }

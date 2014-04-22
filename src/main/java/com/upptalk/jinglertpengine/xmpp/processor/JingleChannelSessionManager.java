@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Jingle Channel Session Manager
@@ -46,6 +47,8 @@ public class JingleChannelSessionManager implements NgResultListener {
     private final ConcurrentLinkedHashMap<String, JingleChannelSession> sessionsByCookie;
 
     private final ScheduledExecutorService scheduledService;
+    private long channelKeepAliveTaskDelay;
+
 
     public JingleChannelSessionManager(final JingleChannelProcessor channelProcessor, final NgClient ngClient) {
         Assert.notNull(channelProcessor);
@@ -74,6 +77,8 @@ public class JingleChannelSessionManager implements NgResultListener {
         final JingleChannelSession s = new JingleChannelSession(id, requestIQ);
         sessions.put(s.getRequestIQ().getID(), s);
         sendOfferRequest(s);
+        scheduledService.scheduleWithFixedDelay(new ChannelKeepAliveTask(s),
+                getChannelKeepAliveTaskDelay(), getChannelKeepAliveTaskDelay(), TimeUnit.MILLISECONDS);
         return s;
     }
 
@@ -100,9 +105,11 @@ public class JingleChannelSessionManager implements NgResultListener {
      * @return the destroyed channel session
      */
     public JingleChannelSession destroySession(String id) {
-
         JingleChannelSession s = sessions.remove(id);
-
+        if (s.getKeepAliveTaskFuture() != null &&
+                !s.getKeepAliveTaskFuture().isDone() && !s.getKeepAliveTaskFuture().isCancelled()) {
+            s.getKeepAliveTaskFuture().cancel(true);
+        }
         return s;
     };
 
@@ -162,8 +169,10 @@ public class JingleChannelSessionManager implements NgResultListener {
             }
 
         } else {
-            getChannelProcessor().sendChannelError(s.getRequestIQ(), result.getParameters().get("result"));
-            log.warn("Couldn't find channel session for cookie: " + result.getCookie());
+            //getChannelProcessor().sendChannelError(s.getRequestIQ(), result.getParameters().get("result"));
+            if (log.isDebugEnabled()) {
+                log.debug("Discarding message with cookie: " + result.getCookie());
+            }
         }
     }
 
@@ -176,7 +185,7 @@ public class JingleChannelSessionManager implements NgResultListener {
                 setParameter("call-id", s.getRequestIQ().getID()).
                 setParameter("from-tag", SdpUtil.getFakeFromTag(s.getRequestIQ())).
                 setParameter("flags", flags).
-                setParameter("sdp", SdpUtil.fakeSdp.toString()).
+                setParameter("sdp", SdpUtil.fakeSdpOffer.toString()).
                 build();
         sessionsByCookie.put(cookie, s);
         ngClient.send(offer, s.getRequestIQ().getFrom().getNode());
@@ -197,7 +206,7 @@ public class JingleChannelSessionManager implements NgResultListener {
                 setParameter("from-tag", SdpUtil.getFakeFromTag(s.getRequestIQ())).
                 setParameter("to-tag", SdpUtil.getFakeToTag(s.getRequestIQ())).
                 setParameter("flags", flags).
-                setParameter("sdp", SdpUtil.fakeSdp.toString()).
+                setParameter("sdp", SdpUtil.fakeSdpAnswer.toString()).
                 build();
         sessionsByCookie.put(cookie, s);
         ngClient.send(answer, s.getRequestIQ().getFrom().getNode());
@@ -217,23 +226,23 @@ public class JingleChannelSessionManager implements NgResultListener {
                 build();
         sessionsByCookie.put(cookie, s);
         ngClient.send(query, s.getRequestIQ().getFrom().getNode());
-        s.setAnswerRequest(query);
         if (log.isDebugEnabled()) {
             log.debug("Sent query command: " + query);
         }
     }
 
-    static class ChannelKillTask implements Runnable {
-
+    class ChannelKeepAliveTask implements Runnable {
         final JingleChannelSession session;
-
-        ChannelKillTask(JingleChannelSession session) {
+        public ChannelKeepAliveTask(JingleChannelSession session) {
             this.session = session;
         }
-
         @Override
         public void run() {
-
+            try {
+                sendQueryRequest(session);
+            } catch (Exception e) {
+                log.error("Error sending querying channel", e);
+            }
         }
     }
 
@@ -245,4 +254,11 @@ public class JingleChannelSessionManager implements NgResultListener {
         return channelProcessor;
     }
 
+    public long getChannelKeepAliveTaskDelay() {
+        return channelKeepAliveTaskDelay;
+    }
+
+    public void setChannelKeepAliveTaskDelay(long channelKeepAliveTaskDelay) {
+        this.channelKeepAliveTaskDelay = channelKeepAliveTaskDelay;
+    }
 }

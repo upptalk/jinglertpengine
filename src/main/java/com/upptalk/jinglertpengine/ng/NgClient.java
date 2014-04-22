@@ -111,7 +111,7 @@ public class NgClient {
      */
     public void send(NgCommand command, String key) throws Exception {
         if (log.isDebugEnabled()) {
-            log.debug("Sending message: "+ command.toString() + " - key: " + key);
+            log.debug("Sending message: "+ command.toBencode() + " - key: " + key);
         }
         final InetSocketAddress server = getServerLocator().selectServer(key, getAvailableServers());
         sendDirect(command, server);

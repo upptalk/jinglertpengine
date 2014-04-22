@@ -5,6 +5,7 @@ import com.upptalk.jinglertpengine.ng.protocol.NgResult;
 import com.upptalk.jinglertpengine.xmpp.tinder.JingleChannelIQ;
 
 import java.io.Serializable;
+import java.util.concurrent.ScheduledFuture;
 
 /**
  * JingleChannel session
@@ -22,6 +23,7 @@ public class JingleChannelSession implements Serializable {
     private NgResult offerResult;
     private NgCommand answerRequest;
     private NgResult answerResult;
+    private ScheduledFuture keepAliveTaskFuture;
 
     private final long timestamp = System.currentTimeMillis();
 
@@ -80,5 +82,13 @@ public class JingleChannelSession implements Serializable {
 
     public void setAnswerResult(NgResult answerResult) {
         this.answerResult = answerResult;
+    }
+
+    public ScheduledFuture getKeepAliveTaskFuture() {
+        return keepAliveTaskFuture;
+    }
+
+    public void setKeepAliveTaskFuture(ScheduledFuture keepAliveTaskFuture) {
+        this.keepAliveTaskFuture = keepAliveTaskFuture;
     }
 }

@@ -3,7 +3,6 @@ package com.upptalk.jinglertpengine.xmpp.tinder.parser;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.xml.DomDriver;
 import com.thoughtworks.xstream.mapper.MapperWrapper;
-import com.upptalk.jinglertpengine.xmpp.jinglenodes.JingleChannel;
 import org.dom4j.Element;
 import org.xmpp.packet.IQ;
 
@@ -21,7 +20,6 @@ public class XStreamIQ<T> extends IQ {
 
     static {
         stream.autodetectAnnotations(true);
-        com.thoughtworks.xstream.annotations.Annotations.configureAliases(stream, JingleChannel.class);
     }
 
     public static XStream getStream() {

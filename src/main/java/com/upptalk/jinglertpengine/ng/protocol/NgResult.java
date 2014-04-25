@@ -17,19 +17,27 @@ import java.util.Map;
  */
 public class NgResult implements Serializable {
 
+
+    public final static String ERROR_REASON_UNKNOW_CALLID = "Unknown call-id";
+
     private final NgResultType ngResultType;
     private final Map<String, String> parameters;
     private final String cookie;
     private final Sdp sdp;
+    private final String errorReason;
 
     public static final String RESULT_ARG = "result";
     public static final String SDP_ARG = "sdp";
+    public static final String ERROR_REASON_ARG = "error-reason";
 
-    private NgResult(NgResultType ngResultType, Map<String, String> parameters, String cookie, Sdp sdp) {
+    private NgResult(NgResultType ngResultType,
+                     Map<String, String> parameters,
+                     String cookie, Sdp sdp, String errorReason) {
         this.ngResultType = ngResultType;
         this.parameters = parameters;
         this.cookie = cookie;
         this.sdp = sdp;
+        this.errorReason = errorReason;
     }
 
     public static class Builder {
@@ -38,6 +46,7 @@ public class NgResult implements Serializable {
         private Map<String, String> parameters;
         private String cookie;
         private Sdp sdp;
+        private String errorReason;
 
         public Builder() {
             parameters = new HashMap<String, String>(20);
@@ -54,7 +63,7 @@ public class NgResult implements Serializable {
             }
 
             return new NgResult(this.ngResultType, Collections.unmodifiableMap(this.parameters),
-                    this.cookie, this.sdp);
+                    this.cookie, this.sdp, this.errorReason);
         }
 
         public Builder setNgResultType(NgResultType ngResultType) {
@@ -75,6 +84,11 @@ public class NgResult implements Serializable {
 
         public Builder setSdp(Sdp sdp) {
             this.sdp = sdp;
+            return this;
+        }
+
+        public Builder setErrorReason(String errorReason) {
+            this.errorReason = errorReason;
             return this;
         }
 
@@ -100,6 +114,10 @@ public class NgResult implements Serializable {
         return sdp;
     }
 
+    public String getErrorReason() {
+        return errorReason;
+    }
+
     public String toBencode() throws Exception {
         return this.cookie + " " +Bencode.encode(this.getParameters());
     }
@@ -113,6 +131,7 @@ public class NgResult implements Serializable {
 
         String cmd = null;
         String sdp = null;
+        String errorReason = null;
 
         for (Object entry: map.values()) {
             if (entry instanceof Map) {
@@ -123,6 +142,16 @@ public class NgResult implements Serializable {
                 if (m.containsKey(SDP_ARG)) {
                     sdp = (String) m.get(SDP_ARG);
                 }
+                if (m.containsKey(ERROR_REASON_ARG)) {
+                    errorReason = (String) m.get(ERROR_REASON_ARG);
+                }
+                for (Object key: m.keySet()) {
+                    Object value = m.get(key);
+                    if (key instanceof String && value instanceof String) {
+                        builder.setParameter((String)key, (String)value);
+                    }
+                }
+
             }
         }
 
@@ -134,6 +163,9 @@ public class NgResult implements Serializable {
         builder.setCookie(cookie);
         if (sdp != null) {
             builder.setSdp(Sdp.fromSdp(sdp));
+        }
+        if (errorReason != null) {
+            builder.setErrorReason(errorReason);
         }
 
         return builder.build();
@@ -172,6 +204,7 @@ public class NgResult implements Serializable {
                 ", parameters=" + parameters +
                 ", cookie='" + cookie + '\'' +
                 ", sdp=" + sdp +
+                ", errorReason='" + errorReason + '\'' +
                 '}';
     }
 }

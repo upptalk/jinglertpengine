@@ -6,6 +6,7 @@ import com.upptalk.jinglertpengine.ng.NgResultListener;
 import com.upptalk.jinglertpengine.ng.protocol.NgCommand;
 import com.upptalk.jinglertpengine.ng.protocol.NgResult;
 import com.upptalk.jinglertpengine.util.RandomString;
+import com.upptalk.jinglertpengine.web.EmbeddedHttpServer;
 import com.upptalk.jinglertpengine.xmpp.jinglenodes.JingleChannel;
 import com.upptalk.jinglertpengine.xmpp.processor.JingleChannelProcessor;
 import com.upptalk.jinglertpengine.xmpp.tinder.JingleChannelIQ;
@@ -27,32 +28,21 @@ import java.util.concurrent.Executors;
  */
 public class ChannelAllocationAndQueryTest {
 
-/*
-    static final String play = "/opt/yuilop/pjsip1/pjsip-apps/bin/samples/x86_64-unknown-linux-gnu/streamutil " +
-            "--send-recv --codec=PCMA --remote=${remote_host}:${remote_port}  " +
-            "--play-file=/opt/yuilop/pjsip1/pjsip-apps/bin/samples/x86_64-unknown-linux-gnu/voicemail1as.wav";
-
-    static final String record = "/opt/yuilop/pjsip1/pjsip-apps/bin/samples/x86_64-unknown-linux-gnu/streamutil " +
-            "recv-recv --codec=PCMA --local-port=${local_port} " +
-            "--record-file=/opt/yuilop/pjsip1/pjsip-apps/bin/samples/x86_64-unknown-linux-gnu/${file}.wav";
-*/
-
     static final String play = "/opt/yuilop/pjsip1/pjsip-apps/bin/samples/x86_64-unknown-linux-gnu/streamutil " +
             "--send-recv --codec=PCMA --remote=${remote_host}:${remote_port} --local-port=${local_port} " +
             "--record-file=/opt/yuilop/pjsip1/pjsip-apps/bin/samples/x86_64-unknown-linux-gnu/${file}.wav " +
             "--play-file=/opt/yuilop/pjsip1/pjsip-apps/bin/samples/x86_64-unknown-linux-gnu/voicemail1as.wav";
 
-    static final String record = "/opt/yuilop/pjsip1/pjsip-apps/bin/samples/x86_64-unknown-linux-gnu/streamutil " +
-            "recv-recv --codec=PCMA --local-port=${local_port} " +
-            "--record-file=/opt/yuilop/pjsip1/pjsip-apps/bin/samples/x86_64-unknown-linux-gnu/${file}.wav";
-
-
     static final ExecutorService service = Executors.newFixedThreadPool(4);
+    static EmbeddedHttpServer server;
+    static int port = 8080;
+
 
     public static void main(String[] args) {
 
         try {
-
+            server = new EmbeddedHttpServer(port);
+            server.start();
             NgClient client = new NgClient(40000, 50000, 10);
             client.setServers(new InetSocketAddress("localhost", 2223));
 
@@ -74,7 +64,7 @@ public class ChannelAllocationAndQueryTest {
             });
 
             JingleChannelProcessor processor = new JingleChannelProcessor(mock, client);
-            processor.setChannelKeepAliveTaskDelay(5000);
+            processor.setChannelKeepAliveTaskDelay(30000);
 
             JingleChannelIQ request = createFakeChannelRequest(RandomString.getCookie()+"_24130402@127.0.0.1",
                     "alice@127.0.0.1", "bob@127.0.0.1");
@@ -85,26 +75,14 @@ public class ChannelAllocationAndQueryTest {
 
             System.out.println("Allocation IQ = " + channelIQ);
 
-
-    /*        recordStream(channelIQ.getJingleChannel().getHost(),
-                    "6000", channelIQ.getJingleChannel().getLocalport()+"");
-
-
-            recordStream(channelIQ.getJingleChannel().getHost(),
-                    "6002", channelIQ.getJingleChannel().getRemoteport()+"");
-*/
+            playStream(channelIQ.getJingleChannel().getHost(),
+                    "6025", channelIQ.getJingleChannel().getRemoteport()+"");
 
 
             playStream(channelIQ.getJingleChannel().getHost(),
-                    "6020", channelIQ.getJingleChannel().getRemoteport()+"");
+                    "6027", channelIQ.getJingleChannel().getLocalport()+"");
 
-
-            playStream(channelIQ.getJingleChannel().getHost(),
-                    "6022", channelIQ.getJingleChannel().getLocalport()+"");
-
-
-
-            Thread.sleep(60000);
+            Thread.sleep(300000);
 
             System.out.println("Closing connection");
             client.close();
@@ -135,6 +113,7 @@ public class ChannelAllocationAndQueryTest {
         service.execute(new Runnable() {
             @Override
             public void run() {
+                long init = System.currentTimeMillis();
                 MediaProcess p = new MediaProcess("play", play.replace("${local_port}", localPort).
                         replace("${remote_port}", remotePort).replace("${remote_host}", host).
                         replace("${file}", "a"+ RandomString.nextRandom(10)));
@@ -146,11 +125,15 @@ public class ChannelAllocationAndQueryTest {
                         if (!p.isStarted()) {
                             break;
                         }
+                        if (System.currentTimeMillis() - init > 15000) {
+                            p.destroy();
+                        }
+
                         if (line==null || line.trim().equals("")) {
                             continue;
                         }
                         if (!line.contains(" GET prefetch")) {
-                            System.out.println("[MEDIA ENGINE]: " + line);
+                          //  System.out.println("[MEDIA ENGINE]: " + line);
                         }
                     } catch (Exception e) {
                         if (e instanceof IOException || e instanceof NullPointerException ) {
@@ -164,44 +147,6 @@ public class ChannelAllocationAndQueryTest {
 
             }
         });
-
-    }
-
-    private static void recordStream(final String host, final String localPort, final String remotePort) {
-
-        service.execute(new Runnable() {
-            @Override
-            public void run() {
-                MediaProcess p = new MediaProcess("record", record.replace("${local_port}", localPort).
-                        replace("${remote_port}", remotePort).replace("${remote_host}", host).
-                        replace("${file}", "a"+ RandomString.nextRandom(10)));
-                while (true) {
-                    String line = null;
-                    try {
-                        line = p.readLine();
-                        if (!p.isStarted()) {
-                            break;
-                        }
-                        if (line==null || line.trim().equals("")) {
-                            continue;
-                        }
-                        if (!line.contains(" GET prefetch")) {
-                            System.out.println("[MEDIA ENGINE]: " + line);
-                        }
-                    } catch (Exception e) {
-                        if (e instanceof IOException || e instanceof NullPointerException ) {
-                            e.printStackTrace();
-                            break;
-                        } else {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-
-            }
-        });
-
-
 
     }
 

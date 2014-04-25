@@ -26,10 +26,15 @@ public class JingleChannelSession implements Serializable {
     private ScheduledFuture keepAliveTaskFuture;
 
     private final long timestamp = System.currentTimeMillis();
+    private long endTimestamp = System.currentTimeMillis();
 
     public JingleChannelSession(String id, JingleChannelIQ requestIQ) {
         this.id = id;
         this.requestIQ = requestIQ;
+    }
+
+    public long getTime() {
+        return (endTimestamp - timestamp) / 1000;
     }
 
     public String getId() {
@@ -91,4 +96,13 @@ public class JingleChannelSession implements Serializable {
     public void setKeepAliveTaskFuture(ScheduledFuture keepAliveTaskFuture) {
         this.keepAliveTaskFuture = keepAliveTaskFuture;
     }
+
+    public long getEndTimestamp() {
+        return endTimestamp;
+    }
+
+    public void setEndTimestamp(long endTimestamp) {
+        this.endTimestamp = endTimestamp;
+    }
+
 }

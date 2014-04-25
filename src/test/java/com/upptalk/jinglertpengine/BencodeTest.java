@@ -83,5 +83,11 @@ public class BencodeTest {
         assertEquals("5323_1 d6:result4:ponge", pong.toBencode());
     }
 
-
+    @Test
+    public void testResultErrorDecode() throws Exception {
+        NgResult error = NgResult.fromBencode(new ByteArrayInputStream(
+                "tgkrv9j d6:result5:error12:error-reason15:Unknown call-ide".getBytes()));
+        System.out.println(error.toString());
+        assertEquals("tgkrv9j d6:result5:error12:error-reason15:Unknown call-ide", error.toBencode());
+    }
 }

@@ -29,6 +29,7 @@ import com.upptalk.jinglertpengine.util.RandomString;
 import com.upptalk.jinglertpengine.xmpp.component.ExternalComponent;
 import com.upptalk.jinglertpengine.xmpp.component.NamespaceProcessor;
 import com.upptalk.jinglertpengine.xmpp.jinglenodes.JingleChannel;
+import com.upptalk.jinglertpengine.xmpp.tinder.JingleChannelEventIQ;
 import com.upptalk.jinglertpengine.xmpp.tinder.JingleChannelIQ;
 import org.apache.log4j.Logger;
 import org.springframework.util.Assert;
@@ -82,8 +83,12 @@ public class JingleChannelProcessor implements NamespaceProcessor {
             sessionManager.createSession(iq.getID(), iq);
         } catch (JingleChannelException e) {
             log.error("Error Processing Jingle Channel request", e);
+            sendXmppError(xmppIQ, e.getMessage());
+            sessionManager.destroySession(xmppIQ.getID());
         } catch (Throwable e) {
             log.error("Severe Error Processing Jingle channel: " + xmppIQ, e);
+            sendXmppError(xmppIQ, e.getMessage());
+            sessionManager.destroySession(xmppIQ.getID());
         }
 
         //should be returned by JingleChannelSessionManager
@@ -105,6 +110,19 @@ public class JingleChannelProcessor implements NamespaceProcessor {
     }
 
     /**
+     * Send an error result to requester
+     * @param request
+     * @param error
+     * @return created result IQ
+     */
+    public IQ sendXmppError(IQ request, String error) {
+        IQ result = IQ.createResultIQ(request);
+        result.setError(new PacketError(PacketError.Condition.internal_server_error, PacketError.Type.cancel, error));
+        getExternalComponent().send(result);
+        return result;
+    }
+
+    /**
      * Send the channel IQ result to requester
      * @param request
      * @param host
@@ -114,11 +132,40 @@ public class JingleChannelProcessor implements NamespaceProcessor {
      * @return
      */
     public JingleChannelIQ sendChannelResult(JingleChannelIQ request, String host,
-                                  String protocol, Integer localPort, Integer remotePort) {
+                                             String protocol, Integer localPort, Integer remotePort) {
         JingleChannelIQ iq = JingleChannelIQ.createResult(request, host, protocol,
                 localPort, remotePort, RandomString.getCookie());
         getExternalComponent().send(iq);
         return iq;
+    }
+
+    /**
+     * Notify about killed channels
+     *
+     * @param result Channel Result IQ
+     * @param time total time spent by the killed channel
+     * @return
+     */
+    public JingleChannelEventIQ sendChannelEvent(JingleChannelIQ result, String time) {
+        JingleChannelEventIQ iq = JingleChannelEventIQ.createRequest(result, time);
+        getExternalComponent().send(iq);
+        return iq;
+    }
+
+    /**
+     * Notify and remove the jingle channel session
+     *
+     * @param id
+     */
+    public void notifyAndRemoveChannelSession(final String id) {
+        try {
+            final JingleChannelSession s = sessionManager.destroySession(id);
+            if (s != null) {
+                sendChannelEvent(s.getResponseIQ(), Long.toString(s.getTime()));
+            }
+        } catch (Exception e) {
+            log.error("Couldn't send event message: ", e);
+        }
     }
 
     @Override

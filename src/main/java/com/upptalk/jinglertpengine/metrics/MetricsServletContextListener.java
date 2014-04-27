@@ -4,7 +4,6 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import com.codahale.metrics.servlets.HealthCheckServlet;
 import com.codahale.metrics.servlets.MetricsServlet;
-import com.upptalk.jinglertpengine.xmpp.JingleRtpEngineService;
 
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
@@ -16,8 +15,8 @@ import javax.servlet.ServletContextListener;
  */
 public class MetricsServletContextListener implements ServletContextListener {
 
-    static final MetricRegistry metricRegistry = JingleRtpEngineService.getMetrics();
-    static final HealthCheckRegistry healthCheckRegistry = new HealthCheckRegistry();
+    static final MetricRegistry metricRegistry = MetricsHolder.getMetrics();
+    static final HealthCheckRegistry healthCheckRegistry = MetricsHolder.getHealthCheck();
 
     @Override
     public void contextInitialized(ServletContextEvent servletContextEvent) {

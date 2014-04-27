@@ -1,12 +1,6 @@
 package com.upptalk.jinglertpengine.xmpp;
 
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.json.MetricsModule;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.upptalk.jinglertpengine.metrics.JingleRtpEngineMetricsRegistry;
-import com.upptalk.jinglertpengine.util.NamingThreadFactory;
+import com.upptalk.jinglertpengine.metrics.MetricsHolder;
 import com.upptalk.jinglertpengine.xmpp.component.ExternalComponent;
 import com.upptalk.jinglertpengine.xmpp.component.MessageProcessor;
 import com.upptalk.jinglertpengine.xmpp.component.NamespaceProcessor;
@@ -15,9 +9,6 @@ import org.jivesoftware.whack.ExternalComponentManager;
 import org.xmpp.component.ComponentException;
 
 import java.util.ArrayList;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 /**
  *  Jingle RTPEngine Service
@@ -29,10 +20,6 @@ import java.util.concurrent.TimeUnit;
 public class JingleRtpEngineService {
 
     private static final Logger log = Logger.getLogger(JingleRtpEngineService.class);
-    private static final Logger metricsLog = Logger.getLogger("jinglertpengine-stats");
-
-    private static final long METRICS_LOG_SCHEDULER_DELAY = 60000;
-    private static final MetricRegistry metrics = new MetricRegistry();
 
     private ExternalComponent externalComponent;
     private ExternalComponentManager manager;
@@ -40,8 +27,6 @@ public class JingleRtpEngineService {
     private String subDomain;
     protected ArrayList<NamespaceProcessor> processorList;
     protected MessageProcessor messageProcessor;
-    private ScheduledExecutorService logService;
-
 
     public ExternalComponent getExternalComponent() {
         return externalComponent;
@@ -85,27 +70,7 @@ public class JingleRtpEngineService {
 
     public void initialize() {
         log.info("Initializing JingleRTPEngine Component...");
-
-        metrics.addListener(new JingleRtpEngineMetricsRegistry());
-
-        final ObjectMapper jsonMapper = new ObjectMapper().registerModule(
-                new MetricsModule(TimeUnit.SECONDS, TimeUnit.MILLISECONDS, false));
-        jsonMapper.enable(SerializationFeature.INDENT_OUTPUT);
-
-        logService = Executors.newSingleThreadScheduledExecutor(new NamingThreadFactory("metrics-log-scheduler"));
-
-        logService.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    metricsLog.info("STATS LOG");
-                    metricsLog.info(jsonMapper.writeValueAsString(JingleRtpEngineService.getMetrics()));
-                } catch (JsonProcessingException e) {
-                    log.error("Error writing stats to log file: ", e);
-                }
-            }
-        }, METRICS_LOG_SCHEDULER_DELAY, METRICS_LOG_SCHEDULER_DELAY, TimeUnit.MILLISECONDS);
-
+        MetricsHolder.start();
     }
 
     public void init() {
@@ -155,7 +120,4 @@ public class JingleRtpEngineService {
         }
     }
 
-    public static MetricRegistry getMetrics() {
-        return metrics;
-    }
 }

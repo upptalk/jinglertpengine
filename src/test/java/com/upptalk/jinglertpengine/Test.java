@@ -1,6 +1,8 @@
 package com.upptalk.jinglertpengine;
 
+import com.upptalk.jinglertpengine.util.XMLUtil;
 import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -40,16 +42,29 @@ public class Test {
         DocumentBuilderFactory factory = documentBuilderFactor.get();
         DocumentBuilder parser = factory.newDocumentBuilder();
 
-        //DOMParser parser = new DOMParser();
-        //parser.parse(new InputSource(new StringReader(xml) ));
         Document doc = parser.parse(new InputSource(new StringReader(xml) ));
-        //Document doc = parser.getDocument();
 
-        // Get the document's root XML node
         NodeList root = doc.getElementsByTagName("methodCall").item(0).getChildNodes();
 
         for (int i=0; i< root.getLength(); i++) {
             System.out.println(root.item(i).getNodeName());
+        }
+
+        System.out.println("methodName: " + XMLUtil.fetchByName(doc.getElementsByTagName("methodCall").item(0),
+                "methodName").getTextContent());
+
+        Node params = XMLUtil.fetchByName(doc.getElementsByTagName("methodCall").item(0),
+                "params");
+
+        System.out.println("Params content: " + params);
+
+        System.out.println("Params size: " + params.getChildNodes().getLength());
+        int index=0;
+        for (int i=0; i<  params.getChildNodes().getLength(); i++) {
+            Node node = params.getChildNodes().item(i);
+            if (node.getNodeName().equals("param")) {
+                System.out.println( index++ + " = "  + params.getChildNodes().item(i).getTextContent());
+            }
         }
 
     }

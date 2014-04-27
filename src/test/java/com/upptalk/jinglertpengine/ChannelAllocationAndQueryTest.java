@@ -7,13 +7,19 @@ import com.upptalk.jinglertpengine.ng.protocol.NgCommand;
 import com.upptalk.jinglertpengine.ng.protocol.NgResult;
 import com.upptalk.jinglertpengine.util.RandomString;
 import com.upptalk.jinglertpengine.web.EmbeddedHttpServer;
+import com.upptalk.jinglertpengine.web.servlets.XmlRpcKillChannelServlet;
 import com.upptalk.jinglertpengine.xmpp.jinglenodes.JingleChannel;
+import com.upptalk.jinglertpengine.xmpp.processor.JingleChannelEventProcessor;
 import com.upptalk.jinglertpengine.xmpp.processor.JingleChannelProcessor;
+import com.upptalk.jinglertpengine.xmpp.processor.JingleChannelSessionManager;
 import com.upptalk.jinglertpengine.xmpp.tinder.JingleChannelIQ;
 import org.xmpp.packet.IQ;
 
+import javax.servlet.http.HttpServlet;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -41,8 +47,7 @@ public class ChannelAllocationAndQueryTest {
     public static void main(String[] args) {
 
         try {
-            server = new EmbeddedHttpServer(port);
-            server.start();
+
             NgClient client = new NgClient(40000, 50000, 10);
             client.setServers(new InetSocketAddress("localhost", 2223));
 
@@ -63,8 +68,16 @@ public class ChannelAllocationAndQueryTest {
                 }
             });
 
-            JingleChannelProcessor processor = new JingleChannelProcessor(mock, client);
-            processor.setChannelKeepAliveTaskDelay(30000);
+            JingleChannelProcessor processor = new JingleChannelProcessor(mock);
+            JingleChannelEventProcessor eventProcessor = new JingleChannelEventProcessor(mock);
+            JingleChannelSessionManager manager = new JingleChannelSessionManager(eventProcessor, processor, client);
+            manager.setChannelKeepAliveTaskDelay(30000);
+            processor.setSessionManager(manager);
+
+            Map<String, HttpServlet> servletMap = new HashMap<String, HttpServlet>();
+            servletMap.put("/xmlrpc", new XmlRpcKillChannelServlet(manager));
+            server = new EmbeddedHttpServer(port, servletMap);
+            server.start();
 
             JingleChannelIQ request = createFakeChannelRequest(RandomString.getCookie()+"_24130402@127.0.0.1",
                     "alice@127.0.0.1", "bob@127.0.0.1");

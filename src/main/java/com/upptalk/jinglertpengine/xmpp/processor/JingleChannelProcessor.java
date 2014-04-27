@@ -24,20 +24,19 @@
 
 package com.upptalk.jinglertpengine.xmpp.processor;
 
-import com.upptalk.jinglertpengine.ng.NgClient;
 import com.upptalk.jinglertpengine.util.RandomString;
 import com.upptalk.jinglertpengine.xmpp.component.ExternalComponent;
 import com.upptalk.jinglertpengine.xmpp.component.NamespaceProcessor;
 import com.upptalk.jinglertpengine.xmpp.jinglenodes.JingleChannel;
-import com.upptalk.jinglertpengine.xmpp.tinder.JingleChannelEventIQ;
 import com.upptalk.jinglertpengine.xmpp.tinder.JingleChannelIQ;
 import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Required;
 import org.springframework.util.Assert;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.PacketError;
 
 /**
- * Jingle RTPEngine processor
+ * Jingle Channel processor
  *
  * @author bhlangonijr
  */
@@ -45,22 +44,11 @@ public class JingleChannelProcessor implements NamespaceProcessor {
 
     final static Logger log = Logger.getLogger(JingleChannelProcessor.class);
     private final ExternalComponent externalComponent;
-    private final JingleChannelSessionManager sessionManager;
-    private static final long DEFAULT_KEEP_ALIVE_TASK_DELAY = 30000;
-    private static final int DEFAULT_RTP_LOCAL_PORT_START = 10000;
-    private static final int DEFAULT_RTP_LOCAL_PORT_END = 60000;
+    private JingleChannelSessionManager sessionManager;
 
-    private int rtpStartPort = DEFAULT_RTP_LOCAL_PORT_START;
-    private int rtpEndPort = DEFAULT_RTP_LOCAL_PORT_END;
-
-    private long channelKeepAliveTaskDelay = DEFAULT_KEEP_ALIVE_TASK_DELAY;
-
-    public JingleChannelProcessor(final ExternalComponent externalComponent, final NgClient ngClient) {
-        Assert.notNull(ngClient);
+    public JingleChannelProcessor(final ExternalComponent externalComponent) {
         Assert.notNull(externalComponent);
         this.externalComponent = externalComponent;
-        this.sessionManager = new JingleChannelSessionManager(this, ngClient);
-        this.sessionManager.setChannelKeepAliveTaskDelay(getChannelKeepAliveTaskDelay());
     }
 
     public void init() {
@@ -74,21 +62,22 @@ public class JingleChannelProcessor implements NamespaceProcessor {
      * @return
      */
     public IQ processIQ(final IQ xmppIQ) {
+        Assert.notNull(getSessionManager());
         JingleChannelIQ iq = null;
         if (log.isDebugEnabled()) {
             log.debug("Received IQ: " + xmppIQ);
         }
         try {
             iq = JingleChannelIQ.fromXml(xmppIQ);
-            sessionManager.createSession(iq.getID(), iq);
+            getSessionManager().createSession(iq.getID(), iq);
         } catch (JingleChannelException e) {
             log.error("Error Processing Jingle Channel request", e);
             sendXmppError(xmppIQ, e.getMessage());
-            sessionManager.destroySession(xmppIQ.getID());
+            getSessionManager().destroySession(xmppIQ.getID());
         } catch (Throwable e) {
             log.error("Severe Error Processing Jingle channel: " + xmppIQ, e);
             sendXmppError(xmppIQ, e.getMessage());
-            sessionManager.destroySession(xmppIQ.getID());
+            getSessionManager().destroySession(xmppIQ.getID());
         }
 
         //should be returned by JingleChannelSessionManager
@@ -139,35 +128,6 @@ public class JingleChannelProcessor implements NamespaceProcessor {
         return iq;
     }
 
-    /**
-     * Notify about killed channels
-     *
-     * @param result Channel Result IQ
-     * @param time total time spent by the killed channel
-     * @return
-     */
-    public JingleChannelEventIQ sendChannelEvent(JingleChannelIQ result, String time) {
-        JingleChannelEventIQ iq = JingleChannelEventIQ.createRequest(result, time);
-        getExternalComponent().send(iq);
-        return iq;
-    }
-
-    /**
-     * Notify and remove the jingle channel session
-     *
-     * @param id
-     */
-    public void notifyAndRemoveChannelSession(final String id) {
-        try {
-            final JingleChannelSession s = sessionManager.destroySession(id);
-            if (s != null) {
-                sendChannelEvent(s.getResponseIQ(), Long.toString(s.getTime()));
-            }
-        } catch (Exception e) {
-            log.error("Couldn't send event message: ", e);
-        }
-    }
-
     @Override
     public IQ processIQGet(IQ iq) {
         log.debug("IQ Get: " + iq);
@@ -198,32 +158,13 @@ public class JingleChannelProcessor implements NamespaceProcessor {
         return externalComponent;
     }
 
-    public int getRtpStartPort() {
-        return rtpStartPort;
-    }
-
-    public void setRtpStartPort(int rtpStartPort) {
-        this.rtpStartPort = rtpStartPort;
-    }
-
-    public int getRtpEndPort() {
-        return rtpEndPort;
-    }
-
-    public void setRtpEndPort(int rtpEndPort) {
-        this.rtpEndPort = rtpEndPort;
+    @Required
+    public void setSessionManager(JingleChannelSessionManager sessionManager) {
+        this.sessionManager = sessionManager;
     }
 
     public JingleChannelSessionManager getSessionManager() {
         return sessionManager;
     }
 
-    public long getChannelKeepAliveTaskDelay() {
-        return channelKeepAliveTaskDelay;
-    }
-
-    public void setChannelKeepAliveTaskDelay(long channelKeepAliveTaskDelay) {
-        this.channelKeepAliveTaskDelay = channelKeepAliveTaskDelay;
-        this.sessionManager.setChannelKeepAliveTaskDelay(getChannelKeepAliveTaskDelay());
-    }
 }

@@ -3,6 +3,7 @@ package com.upptalk.jinglertpengine;
 import com.upptalk.jinglertpengine.ng.protocol.NgCommand;
 import com.upptalk.jinglertpengine.ng.protocol.NgCommandType;
 import com.upptalk.jinglertpengine.ng.protocol.NgResult;
+import com.upptalk.jinglertpengine.ng.protocol.NgResultType;
 import com.upptalk.jinglertpengine.util.Bencode;
 import org.junit.Test;
 
@@ -88,6 +89,7 @@ public class BencodeTest {
         NgResult error = NgResult.fromBencode(new ByteArrayInputStream(
                 "tgkrv9j d6:result5:error12:error-reason15:Unknown call-ide".getBytes()));
         System.out.println(error.toString());
-        assertEquals("tgkrv9j d6:result5:error12:error-reason15:Unknown call-ide", error.toBencode());
+        assertEquals(error.getErrorReason(), "Unknown call-id");
+        assertEquals(error.getNgResultType(), NgResultType.error);
     }
 }

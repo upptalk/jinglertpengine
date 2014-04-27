@@ -6,7 +6,9 @@ import com.upptalk.jinglertpengine.ng.NgResultListener;
 import com.upptalk.jinglertpengine.ng.protocol.NgCommand;
 import com.upptalk.jinglertpengine.ng.protocol.NgResult;
 import com.upptalk.jinglertpengine.xmpp.jinglenodes.JingleChannel;
+import com.upptalk.jinglertpengine.xmpp.processor.JingleChannelEventProcessor;
 import com.upptalk.jinglertpengine.xmpp.processor.JingleChannelProcessor;
+import com.upptalk.jinglertpengine.xmpp.processor.JingleChannelSessionManager;
 import com.upptalk.jinglertpengine.xmpp.tinder.JingleChannelIQ;
 import org.xmpp.packet.IQ;
 
@@ -47,7 +49,11 @@ public class ChannelAllocationTest {
                 }
             });
 
-            JingleChannelProcessor processor = new JingleChannelProcessor(mock, client);
+            JingleChannelProcessor processor = new JingleChannelProcessor(mock);
+            JingleChannelEventProcessor eventProcessor = new JingleChannelEventProcessor(mock);
+            JingleChannelSessionManager manager = new JingleChannelSessionManager(eventProcessor, processor, client);
+            manager.setChannelKeepAliveTaskDelay(30000);
+            processor.setSessionManager(manager);
 
             JingleChannelIQ request = createFakeChannelRequest("335676746_24130402@188.67.173.24",
                     "alice@188.67.173.24", "alice@188.67.173.23");

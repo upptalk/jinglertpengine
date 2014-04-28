@@ -132,7 +132,14 @@ public class JingleChannelSessionManager implements NgResultListener {
         JingleChannelSession s = sessions.remove(id);
         log.info("Destroyng session: " + id);
         if (s == null) {
-            log.info("Session not found: " + id);
+            if (id.contains(SdpUtil.FAKE_TAG_MARK)) {
+                log.info("Extracting call-id from fake-tag: " +id);
+                id = id.split(SdpUtil.FAKE_TAG_MARK, 2)[1];
+                s = sessions.remove(id);
+            }
+            if (s == null) {
+                log.info("Session not found: " + id);
+            }
         }
         if (s != null) {
             if (s.getEndTimestamp() == s.getTimestamp()) {

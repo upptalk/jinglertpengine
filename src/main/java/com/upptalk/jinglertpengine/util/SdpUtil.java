@@ -23,6 +23,8 @@ public class SdpUtil {
             "m=audio 49170 RTP/AVP 0 97\r\n" +
             "a=rtpmap:97 iLBC/8000\r\n" +
             "a=sendrecv";
+    public static final String FAKE_TAG_MARK = "x.";
+
 
     /**
      * Generates a fake sip from-tag
@@ -31,7 +33,7 @@ public class SdpUtil {
      * @return from-tag string
      */
     public static String getFakeFromTag(IQ iq) {
-        return iq.getFrom().getNode().replace("+", "00") + "." + iq.getID();
+        return iq.getFrom().getNode().replace("+", "00") + FAKE_TAG_MARK + iq.getID();
     }
 
     /**
@@ -41,7 +43,7 @@ public class SdpUtil {
      * @return to-tag string
      */
     public static String getFakeToTag(IQ iq) {
-        return iq.getTo().getNode().replace("+", "00") + "." + iq.getID();
+        return iq.getTo().getNode().replace("+", "00") + FAKE_TAG_MARK + iq.getID();
     }
 
 }

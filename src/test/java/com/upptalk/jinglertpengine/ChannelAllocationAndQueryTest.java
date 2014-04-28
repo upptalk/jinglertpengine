@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -88,14 +89,17 @@ public class ChannelAllocationAndQueryTest {
 
             System.out.println("Allocation IQ = " + channelIQ);
 
+            Random random = new Random();
+            int port = random.nextInt(10000) + 5000;
+
             playStream(channelIQ.getJingleChannel().getHost(),
-                    "6025", channelIQ.getJingleChannel().getRemoteport()+"");
+                    String.valueOf(port), channelIQ.getJingleChannel().getRemoteport()+"");
 
 
             playStream(channelIQ.getJingleChannel().getHost(),
-                    "6027", channelIQ.getJingleChannel().getLocalport()+"");
+                    String.valueOf(port+2), channelIQ.getJingleChannel().getLocalport()+"");
 
-            Thread.sleep(300000);
+            Thread.sleep(450000);
 
             System.out.println("Closing connection");
             client.close();

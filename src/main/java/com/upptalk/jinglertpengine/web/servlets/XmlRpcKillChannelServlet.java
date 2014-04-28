@@ -74,7 +74,7 @@ public class XmlRpcKillChannelServlet extends HttpServlet {
                 log.debug("Request parsed: " + req);
             }
 
-            sessionManager.destroySession(req.getParams().get(2));
+            sessionManager.notifyAndRemoveChannelSession(req.getParams().get(2));
 
         } catch(Exception e) {
             log.error("Error while parsing request from media proxy ", e);

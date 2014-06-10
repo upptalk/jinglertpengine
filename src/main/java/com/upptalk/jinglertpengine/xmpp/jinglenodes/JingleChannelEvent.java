@@ -26,7 +26,7 @@ package com.upptalk.jinglertpengine.xmpp.jinglenodes;
 
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 import com.thoughtworks.xstream.annotations.XStreamAsAttribute;
-import com.upptalk.jinglertpengine.xmpp.tinder.parser.XStreamIQ;
+import com.upptalk.jinglertpengine.xmpp.tinder.JingleChannelEventIQ;
 import org.dom4j.Namespace;
 
 import javax.xml.bind.annotation.XmlAttribute;
@@ -88,7 +88,7 @@ public class JingleChannelEvent {
     }
 
     public String toString() {
-        return XStreamIQ.getStream().toXML(this);
+        return JingleChannelEventIQ.getParser().toXML(this);
     }
 
 }

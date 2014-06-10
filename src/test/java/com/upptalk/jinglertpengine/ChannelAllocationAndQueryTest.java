@@ -1,4 +1,4 @@
-package com.upptalk.jinglertpengine;
+ package com.upptalk.jinglertpengine;
 
 import com.upptalk.jinglertpengine.ng.NgClient;
 import com.upptalk.jinglertpengine.ng.NgCommandListener;
@@ -80,7 +80,8 @@ public class ChannelAllocationAndQueryTest {
             server = new EmbeddedHttpServer(port, servletMap);
             server.start();
 
-            JingleChannelIQ request = createFakeChannelRequest(RandomString.getCookie()+"_24130402@127.0.0.1",
+            String sid = RandomString.getCookie()+"_24130402@127.0.0.1";
+            JingleChannelIQ request = createFakeChannelRequest(sid,
                     "alice@127.0.0.1", "bob@127.0.0.1");
 
             processor.processIQ(request);
@@ -99,7 +100,8 @@ public class ChannelAllocationAndQueryTest {
             playStream(channelIQ.getJingleChannel().getHost(),
                     String.valueOf(port+2), channelIQ.getJingleChannel().getLocalport()+"");
 
-            Thread.sleep(450000);
+            Thread.sleep(30000);
+            manager.sendDeleteRequest(manager.getSession(sid));
 
             System.out.println("Closing connection");
             client.close();
@@ -142,7 +144,7 @@ public class ChannelAllocationAndQueryTest {
                         if (!p.isStarted()) {
                             break;
                         }
-                        if (System.currentTimeMillis() - init > 15000) {
+                        if (System.currentTimeMillis() - init > 30000) {
                             p.destroy();
                         }
 
@@ -150,7 +152,7 @@ public class ChannelAllocationAndQueryTest {
                             continue;
                         }
                         if (!line.contains(" GET prefetch")) {
-                          //  System.out.println("[MEDIA ENGINE]: " + line);
+                           // System.out.println("[MEDIA ENGINE]: " + line);
                         }
                     } catch (Exception e) {
                         if (e instanceof IOException || e instanceof NullPointerException ) {

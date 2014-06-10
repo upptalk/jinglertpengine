@@ -1,7 +1,9 @@
 package com.upptalk.jinglertpengine.xmpp.tinder;
 
+import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.io.xml.DomDriver;
+import com.thoughtworks.xstream.mapper.MapperWrapper;
 import com.upptalk.jinglertpengine.xmpp.jinglenodes.JingleChannel;
-import com.upptalk.jinglertpengine.xmpp.tinder.parser.XStreamIQ;
 import org.apache.log4j.Logger;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
@@ -19,11 +21,27 @@ import java.io.StringReader;
  *
  * @author bhlangonijr
  */
-public class JingleChannelIQ extends XStreamIQ<JingleChannel> {
+public class JingleChannelIQ extends IQ {
 
     final static Logger log = Logger.getLogger(JingleChannelIQ.class);
     private final JingleChannel jingleChannel;
+    final static XStream stream = new XStream(new DomDriver()) {
+        protected MapperWrapper wrapMapper(MapperWrapper next) {
+            return new MapperWrapper(next) {
+                public boolean shouldSerializeMember(Class definedIn, String fieldName) {
+                    return definedIn != Object.class && super.shouldSerializeMember(definedIn, fieldName);
+                }
+            };
+        }
+    };
 
+    static {
+        stream.autodetectAnnotations(true);
+    }
+
+    public static XStream getStream() {
+        return stream;
+    }
     public JingleChannelIQ(final JingleChannel element) {
         this.setType(IQ.Type.get);
         this.jingleChannel = element;
@@ -75,7 +93,7 @@ public class JingleChannelIQ extends XStreamIQ<JingleChannel> {
         jingleChannelIQ.setTo(iq.getFrom());
         jingleChannelIQ.setFrom(iq.getTo());
         jingleChannelIQ.setID(iq.getID());
-        jingleChannelIQ.setType(iq.getType());
+        jingleChannelIQ.setType(Type.result);
 
         return jingleChannelIQ;
 

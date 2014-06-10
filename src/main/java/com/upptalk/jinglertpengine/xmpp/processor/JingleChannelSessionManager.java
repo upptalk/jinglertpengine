@@ -227,7 +227,7 @@ public class JingleChannelSessionManager implements NgResultListener {
     }
 
     // Send offer with sdp
-    private void sendOfferRequest(final JingleChannelSession s) throws Exception {
+    public void sendOfferRequest(final JingleChannelSession s) throws Exception {
         final String cookie = RandomString.getCookie();
         final NgCommand offer = NgCommand.builder().
                 setCookie(cookie).
@@ -247,7 +247,7 @@ public class JingleChannelSessionManager implements NgResultListener {
     }
 
     //Send answer with sdp
-    private void sendAnswerRequest(final JingleChannelSession s) throws Exception {
+    public void sendAnswerRequest(final JingleChannelSession s) throws Exception {
         final String cookie = RandomString.getCookie();
         final NgCommand answer = NgCommand.builder().
                 setCookie(cookie).
@@ -267,7 +267,7 @@ public class JingleChannelSessionManager implements NgResultListener {
     }
 
     //Send channel query request
-    private void sendQueryRequest(final JingleChannelSession s) throws Exception {
+    public void sendQueryRequest(final JingleChannelSession s) throws Exception {
         final String cookie = RandomString.getCookie();
         final NgCommand query = NgCommand.builder().
                 setCookie(cookie).
@@ -278,6 +278,22 @@ public class JingleChannelSessionManager implements NgResultListener {
         ngClient.send(query, s.getRequestIQ().getFrom().getNode());
         if (log.isDebugEnabled()) {
             log.debug("Sent query command: " + query);
+        }
+    }
+
+    //Send delete
+    public void sendDeleteRequest(final JingleChannelSession s) throws Exception {
+        final String cookie = RandomString.getCookie();
+        final NgCommand delete = NgCommand.builder().
+                setCookie(cookie).
+                setNgCommandType(NgCommandType.delete).
+                setParameter("call-id", s.getRequestIQ().getID()).
+                setParameter("from-tag", SdpUtil.getFakeFromTag(s.getRequestIQ())).
+                build();
+        sessionsByCookie.put(cookie, s);
+        ngClient.send(delete, s.getRequestIQ().getFrom().getNode());
+        if (log.isDebugEnabled()) {
+            log.debug("Sent delete command: " + delete);
         }
     }
 

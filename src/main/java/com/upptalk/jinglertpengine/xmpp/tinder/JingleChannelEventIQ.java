@@ -1,7 +1,7 @@
 package com.upptalk.jinglertpengine.xmpp.tinder;
 
+import com.upptalk.jinglertpengine.util.XmlParser;
 import com.upptalk.jinglertpengine.xmpp.jinglenodes.JingleChannelEvent;
-import com.upptalk.jinglertpengine.xmpp.tinder.parser.XStreamIQ;
 import org.apache.log4j.Logger;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
@@ -18,10 +18,16 @@ import java.io.StringReader;
  *
  * @author bhlangonijr
  */
-public class JingleChannelEventIQ extends XStreamIQ<JingleChannelEvent> {
+public class JingleChannelEventIQ extends IQ {
 
     final static Logger log = Logger.getLogger(JingleChannelEventIQ.class);
     private final JingleChannelEvent jingleChannelEvent;
+
+    final static XmlParser parser = new XmlParser();
+
+    public final static XmlParser getParser() {
+        return parser;
+    }
 
     public JingleChannelEventIQ(final JingleChannelEvent element) {
         this.setType(Type.set);
@@ -46,7 +52,7 @@ public class JingleChannelEventIQ extends XStreamIQ<JingleChannelEvent> {
                 e = e.element("channel");
             }
             final String child = e.asXML().replace("\n", "");
-            final JingleChannelEvent j = (JingleChannelEvent) JingleChannelEventIQ.getStream().fromXML(child);
+            final JingleChannelEvent j = (JingleChannelEvent) getParser().fromXML(child);
 
             final JingleChannelEventIQ jingleChannelEventIQ = new JingleChannelEventIQ(j);
             jingleChannelEventIQ.setTo(iq.getTo());

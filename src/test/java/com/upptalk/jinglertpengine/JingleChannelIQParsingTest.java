@@ -85,9 +85,9 @@ public class JingleChannelIQParsingTest {
         JingleChannel channel = new JingleChannel();
         channel.setProtocol(JingleChannel.UDP);
         IQ iq = new JingleChannelIQ(channel);
-        iq.setFrom("+16109862250@sipin3601.ym.ms");
+        iq.setFrom("+16109862251@sipin3601.ym.ms");
         iq.setType(IQ.Type.get);
-        iq.setTo("+16109862250@sjin360.ym.ms");
+        iq.setTo("+16109862251@sjin360.ym.ms");
         iq.setID("764-35019616");
 
         JingleChannelIQ iq2 = JingleChannelIQ.fromXml(iq);

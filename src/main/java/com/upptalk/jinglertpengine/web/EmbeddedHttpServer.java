@@ -33,6 +33,7 @@ public class EmbeddedHttpServer {
     }
 
     public void start() throws Exception {
+        log.info("Starting embedded http server on port: " + port);
         server = new Server(port);
         context = new ServletContextHandler(ServletContextHandler.SESSIONS);
         server.setHandler(context);
@@ -51,6 +52,7 @@ public class EmbeddedHttpServer {
 
     public void stop() throws Exception {
         if (server != null) {
+            log.info("Stopped embedded http server");
             server.stop();
         }
     }

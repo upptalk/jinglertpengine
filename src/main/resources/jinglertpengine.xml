@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:task="http://www.springframework.org/schema/task"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+    http://www.springframework.org/schema/task
+   http://www.springframework.org/schema/task/spring-task-3.0.xsd">
+
+    <bean id="propertyConfigurer"
+          class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="location">
+            <value>file:///${jinglertpengine.home}/conf/jinglertpengine-properties.xml</value>
+        </property>
+        <property name="ignoreUnresolvablePlaceholders" value="true"/>
+    </bean>
+
+
+    <bean id="externalComponentManager" class="org.jivesoftware.whack.ExternalComponentManager">
+        <constructor-arg value="${xmpp.server}"/>
+        <constructor-arg value="${xmpp.port}"/>
+    </bean>
+
+    <bean id="externalComponent" class="com.upptalk.jinglertpengine.xmpp.JingleRtpEngineComponent">
+        <constructor-arg index="0" value="${jinglertpengine.subdomain}"/>
+        <constructor-arg index="1" value="Jingle RTP Engine Service Component"/>
+        <constructor-arg index="2" value="${jinglertpengine.domain}"/>
+        <property name="manager" ref="externalComponentManager"/>
+    </bean>
+
+    <bean id="jinglertpengineService" init-method="init" destroy-method="destroy" class="com.upptalk.jinglertpengine.xmpp.JingleRtpEngineService">
+        <property name="manager" ref="externalComponentManager"/>
+        <property name="externalComponent" ref="externalComponent"/>
+        <property name="subDomain" value="${jinglertpengine.subdomain}"/>
+        <property name="password" value="${jinglertpengine.password}"/>
+        <property name="processorList">
+            <list>
+                <ref bean="jingleChannelProcessor"/>
+            </list>
+        </property>
+    </bean>
+
+    <bean id="jingleChannelProcessor" class="com.upptalk.jinglertpengine.xmpp.processor.JingleChannelProcessor" abstract="false">
+        <constructor-arg index="0" ref="externalComponent"/>
+        <property name="sessionManager" ref="jingleChannelSessionManager"/>
+    </bean>
+
+    <bean id="jingleChannelEventProcessor" class="com.upptalk.jinglertpengine.xmpp.processor.JingleChannelEventProcessor" abstract="false">
+        <constructor-arg index="0" ref="externalComponent"/>
+    </bean>
+
+    <bean id="jingleChannelSessionManager" class="com.upptalk.jinglertpengine.xmpp.processor.JingleChannelSessionManager">
+        <constructor-arg index="0" ref="jingleChannelEventProcessor"/>
+        <constructor-arg index="1" ref="jingleChannelProcessor"/>
+        <constructor-arg index="2" ref="ngClient"/>
+    </bean>
+
+    <bean id="ngClient" class="com.upptalk.jinglertpengine.ng.NgClient">
+        <property name="servers" >
+            <list>
+                <bean class="java.net.InetSocketAddress">
+                    <constructor-arg value="${mediaproxy.server1.host}"/>
+                    <constructor-arg value="${mediaproxy.server1.port}"/>
+                </bean>
+            </list>
+        </property>
+    </bean>
+
+    <bean id="xmlRpcServer" class="com.upptalk.jinglertpengine.web.EmbeddedHttpServer">
+        <constructor-arg index="0" value="${mediaproxy.xmlrpc.port}"/>
+        <constructor-arg index="1">
+            <map>
+                <entry key="/xmlrpc">
+                    <bean class="com.upptalk.jinglertpengine.web.servlets.XmlRpcKillChannelServlet">
+                        <constructor-arg index="0" ref="jingleChannelSessionManager"/>
+                    </bean>
+                </entry>
+            </map>
+        </constructor-arg>
+    </bean>
+</beans>

@@ -3,8 +3,7 @@ package com.upptalk.jinglertpengine;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.log4j.xml.DOMConfigurator;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.context.ApplicationContext;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.support.FileSystemXmlApplicationContext;
 
 import java.util.Properties;
@@ -19,11 +18,19 @@ import java.util.Properties;
 public class Main {
     private static final Logger log = Logger.getLogger(Main.class);
     static String homeDir;
+    static String springFile="conf/jinglertpengine.xml";
+    static String logFile="conf/log4j.xml";
 
     public static void main(String[] args) {
 
         if (args.length>0) {
             final String opt = args[0].toLowerCase();
+            if (args.length > 1) {
+                springFile=args[1].toLowerCase();
+            }
+            if (args.length > 2) {
+                logFile=args[2].toLowerCase();
+            }
             if ("start".equals(opt)) {
                 start();
             } else if ("stop".equals(opt)) {
@@ -48,16 +55,14 @@ public class Main {
             log.info("Using home directory: "+homeDir);
             Properties p = System.getProperties();
             p.setProperty("jinglertpengine.home", homeDir);
-            PropertyConfigurator.configure(homeDir + "/conf/log4j.xml");
-            DOMConfigurator.configureAndWatch(homeDir + "/conf/log4j.xml");
-            ApplicationContext appContext =
-                    new FileSystemXmlApplicationContext("file:"+homeDir+"/conf/jinglertpengine.xml");
-            BeanFactory factory = (BeanFactory) appContext;
-            //com = (ComServiceProvider)factory.getBean("com");
+            PropertyConfigurator.configure(homeDir + "/" + logFile);
+            DOMConfigurator.configureAndWatch(homeDir + "/" + logFile);
+            ConfigurableApplicationContext appContext =
+                    new FileSystemXmlApplicationContext("file:" + homeDir + "/" + springFile);
             double time = (double)(System.currentTimeMillis()-init)/1000.0;
             addShutdownHook();
             log.info("Started Jingle RTP Engine server in "+time+" seconds");
-
+            appContext.start();
             while (true) {
                 synchronized (homeDir) {
                     homeDir.wait(5000);

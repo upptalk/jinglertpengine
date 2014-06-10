@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+
+    <entry key="xmpp.server">localhost</entry>
+    <entry key="xmpp.port">8889</entry>
+    <entry key="jinglertpengine.subdomain">jinglenodes</entry>
+    <entry key="jinglertpengine.domain">bhlangonijr-lap</entry>
+    <entry key="jinglertpengine.password">secret</entry>
+
+    <entry key="mediaproxy.server1.host">localhost</entry>
+    <entry key="mediaproxy.server1.port">2223</entry>
+
+    <entry key="mediaproxy.xmlrpc.port">8080</entry>
+
+</properties>

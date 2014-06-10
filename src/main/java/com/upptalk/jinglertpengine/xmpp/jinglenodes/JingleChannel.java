@@ -114,7 +114,7 @@ public class JingleChannel {
     }
 
     public String toString() {
-        return JingleChannelIQ.getStream().toXML(this);
+        return JingleChannelIQ.getParser().toXML(this);
     }
 
 }

@@ -65,7 +65,7 @@ public class Main {
             appContext.start();
             while (true) {
                 synchronized (homeDir) {
-                    homeDir.wait(5000);
+                    homeDir.wait(60000);
                     log.debug("Server is alive...");
                 }
             }

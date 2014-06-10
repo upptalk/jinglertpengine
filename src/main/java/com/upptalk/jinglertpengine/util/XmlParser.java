@@ -26,6 +26,10 @@ public class XmlParser {
         stream.autodetectAnnotations(true);
     }
 
+    public void processAnnotations(Class clazz) {
+        stream.processAnnotations(clazz);
+    }
+
     public String toXML(Object object) {
         return stream.toXML(object);
     }

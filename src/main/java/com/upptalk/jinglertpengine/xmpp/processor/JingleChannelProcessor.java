@@ -131,7 +131,7 @@ public class JingleChannelProcessor implements NamespaceProcessor {
     @Override
     public IQ processIQGet(IQ iq) {
         log.debug("IQ Get: " + iq);
-        return null;
+        return processIQ(iq);
     }
 
     @Override

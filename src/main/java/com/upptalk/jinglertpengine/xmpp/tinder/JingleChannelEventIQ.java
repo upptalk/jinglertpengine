@@ -24,7 +24,9 @@ public class JingleChannelEventIQ extends IQ {
     private final JingleChannelEvent jingleChannelEvent;
 
     final static XmlParser parser = new XmlParser();
-
+    static {
+        getParser().processAnnotations(JingleChannelEvent.class);
+    }
     public final static XmlParser getParser() {
         return parser;
     }

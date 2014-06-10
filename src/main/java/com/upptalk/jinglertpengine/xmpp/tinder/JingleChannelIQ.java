@@ -1,8 +1,6 @@
 package com.upptalk.jinglertpengine.xmpp.tinder;
 
-import com.thoughtworks.xstream.XStream;
-import com.thoughtworks.xstream.io.xml.DomDriver;
-import com.thoughtworks.xstream.mapper.MapperWrapper;
+import com.upptalk.jinglertpengine.util.XmlParser;
 import com.upptalk.jinglertpengine.xmpp.jinglenodes.JingleChannel;
 import org.apache.log4j.Logger;
 import org.dom4j.Document;
@@ -25,23 +23,14 @@ public class JingleChannelIQ extends IQ {
 
     final static Logger log = Logger.getLogger(JingleChannelIQ.class);
     private final JingleChannel jingleChannel;
-    final static XStream stream = new XStream(new DomDriver()) {
-        protected MapperWrapper wrapMapper(MapperWrapper next) {
-            return new MapperWrapper(next) {
-                public boolean shouldSerializeMember(Class definedIn, String fieldName) {
-                    return definedIn != Object.class && super.shouldSerializeMember(definedIn, fieldName);
-                }
-            };
-        }
-    };
-
+    final static XmlParser parser = new XmlParser();
     static {
-        stream.autodetectAnnotations(true);
+        getParser().processAnnotations(JingleChannel.class);
+    }
+    public final static XmlParser getParser() {
+        return parser;
     }
 
-    public static XStream getStream() {
-        return stream;
-    }
     public JingleChannelIQ(final JingleChannel element) {
         this.setType(IQ.Type.get);
         this.jingleChannel = element;
@@ -65,7 +54,7 @@ public class JingleChannelIQ extends IQ {
                 e = e.element("channel");
             }
             final String child = e.asXML().replace("\n", "");
-            final JingleChannel j = (JingleChannel) JingleChannelIQ.getStream().fromXML(child);
+            final JingleChannel j = (JingleChannel) JingleChannelIQ.getParser().fromXML(child);
 
             final JingleChannelIQ jingleChannelIQ = new JingleChannelIQ(j);
             jingleChannelIQ.setTo(iq.getTo());

@@ -1,7 +1,5 @@
 package com.upptalk.jinglertpengine;
 
-import org.junit.Test;
-
 /**
  * @author bhlangonijr
  *         Date: 5/21/14
@@ -10,15 +8,14 @@ import org.junit.Test;
 public class ServerTest {
 
 
-    @Test
-    public void run() {
+    public static void main(String[] args) {
 
-        System.out.println("Classpath: " + getClass().getProtectionDomain().getCodeSource().getLocation().getPath());
+        System.out.println("Classpath: " + Main.class.getProtectionDomain().getCodeSource().getLocation().getPath());
 
         System.setProperty("jinglertpengine.home",
-                getClass().getProtectionDomain().getCodeSource().getLocation().getPath());
+                Main.class.getProtectionDomain().getCodeSource().getLocation().getPath());
 
-        Main.main(new String[]{"start", "jinglertpengine-test.xml", "log4j.xml"});
+        Main.main(new String[]{"start", "jinglertpengine.xml", "log4j.xml"});
 
     }
 

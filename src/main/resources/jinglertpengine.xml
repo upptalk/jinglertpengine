@@ -10,7 +10,7 @@
     <bean id="propertyConfigurer"
           class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
         <property name="location">
-            <value>file:///${jinglertpengine.home}/conf/jinglertpengine-properties.xml</value>
+            <value>file:///${jinglertpengine.home}/jinglertpengine-properties.xml</value>
         </property>
         <property name="ignoreUnresolvablePlaceholders" value="true"/>
     </bean>
@@ -40,12 +40,12 @@
         </property>
     </bean>
 
-    <bean id="jingleChannelProcessor" class="com.upptalk.jinglertpengine.xmpp.processor.JingleChannelProcessor" abstract="false">
+    <bean id="jingleChannelProcessor" class="com.upptalk.jinglertpengine.xmpp.processor.JingleChannelProcessor">
         <constructor-arg index="0" ref="externalComponent"/>
         <property name="sessionManager" ref="jingleChannelSessionManager"/>
     </bean>
 
-    <bean id="jingleChannelEventProcessor" class="com.upptalk.jinglertpengine.xmpp.processor.JingleChannelEventProcessor" abstract="false">
+    <bean id="jingleChannelEventProcessor" class="com.upptalk.jinglertpengine.xmpp.processor.JingleChannelEventProcessor">
         <constructor-arg index="0" ref="externalComponent"/>
     </bean>
 

@@ -1,5 +1,7 @@
 package com.upptalk.jinglertpengine.web.servlets;
 
+import com.codahale.metrics.Counter;
+import com.upptalk.jinglertpengine.metrics.MetricsHolder;
 import com.upptalk.jinglertpengine.xmpp.processor.JingleChannelSessionManager;
 import org.apache.log4j.Logger;
 import org.springframework.util.Assert;
@@ -12,6 +14,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+
+import static com.codahale.metrics.MetricRegistry.name;
 
 /**
  * This service will be responding to xmlrpc callbacks
@@ -26,6 +30,9 @@ import java.io.InputStreamReader;
 public class XmlRpcKillChannelServlet extends HttpServlet {
 
     private static final Logger log = Logger.getLogger(XmlRpcKillChannelServlet.class);
+
+    final Counter channelKilled = MetricsHolder.getMetrics().
+            counter(name(XmlRpcKillChannelServlet.class, "channel-killed-callback"));
 
     private final static String responseOK = "<methodResponse><params>" +
             "<param><value><string>ok</string></value></param>" +
@@ -66,7 +73,7 @@ public class XmlRpcKillChannelServlet extends HttpServlet {
     protected void handleResponse(HttpServletRequest request, HttpServletResponse response) throws ServletException,
             IOException {
         response.setContentType("text/xml");
-
+        channelKilled.inc();
         try {
 
             final XmlRpcRequest req = XmlRpcRequest.parseFromStream(request.getInputStream());

@@ -1,6 +1,10 @@
 package com.upptalk.jinglertpengine.xmpp.processor;
 
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Gauge;
+import com.codahale.metrics.Histogram;
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
+import com.upptalk.jinglertpengine.metrics.MetricsHolder;
 import com.upptalk.jinglertpengine.ng.NgClient;
 import com.upptalk.jinglertpengine.ng.NgResultListener;
 import com.upptalk.jinglertpengine.ng.protocol.NgCommand;
@@ -21,6 +25,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+
+import static com.codahale.metrics.MetricRegistry.name;
 
 /**
  * Jingle Channel Session Manager
@@ -52,6 +58,15 @@ public class JingleChannelSessionManager implements NgResultListener {
     private final ScheduledExecutorService scheduledService;
     private long channelKeepAliveTaskDelay = DEFAULT_KEEP_ALIVE_TASK_DELAY;
 
+    final Histogram sessionLengths= MetricsHolder.getMetrics().
+            histogram(name(JingleChannelSessionManager.class, "channel-session-lengths"));
+
+    final Counter channelRequests = MetricsHolder.getMetrics().
+            counter(name(JingleChannelSessionManager.class, "channel-requests"));
+
+    final Counter channelDestroyed = MetricsHolder.getMetrics().
+            counter(name(JingleChannelSessionManager.class, "channel-destroyed"));
+
     public JingleChannelSessionManager(final JingleChannelEventProcessor channelEventProcessor,
                                        final JingleChannelProcessor channelProcessor, final NgClient ngClient) {
         Assert.notNull(channelEventProcessor);
@@ -66,6 +81,14 @@ public class JingleChannelSessionManager implements NgResultListener {
                 maximumWeightedCapacity(SESSION_MAX_ENTRIES).build();
         scheduledService = Executors.newSingleThreadScheduledExecutor(new NamingThreadFactory("ChannelKillTask"));
         ngClient.getResultListeners().add(this);
+
+        MetricsHolder.getMetrics().register(name(JingleChannelSessionManager.class,
+                "channel-active-relay-channels"), new Gauge<Integer>() {
+            @Override
+            public Integer getValue() {
+                return sessions.size();
+            }
+        });
     }
 
     /**
@@ -85,6 +108,7 @@ public class JingleChannelSessionManager implements NgResultListener {
         ScheduledFuture f = scheduledService.scheduleWithFixedDelay(new ChannelKeepAliveTask(s),
                 getChannelKeepAliveTaskDelay(), getChannelKeepAliveTaskDelay(), TimeUnit.MILLISECONDS);
         s.setKeepAliveTaskFuture(f);
+        channelRequests.inc();
         return s;
     }
 
@@ -144,12 +168,14 @@ public class JingleChannelSessionManager implements NgResultListener {
         if (s != null) {
             if (s.getEndTimestamp() == s.getTimestamp()) {
                 s.setEndTimestamp(System.currentTimeMillis());
+                sessionLengths.update(s.getEndTimestamp()-s.getTimestamp());
             }
             if (s.getKeepAliveTaskFuture() != null &&
                     !s.getKeepAliveTaskFuture().isDone() && !s.getKeepAliveTaskFuture().isCancelled()) {
                 s.getKeepAliveTaskFuture().cancel(true);
             }
         }
+        channelDestroyed.inc();
         return s;
     };
 

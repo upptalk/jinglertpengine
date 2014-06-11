@@ -1,6 +1,8 @@
 package com.upptalk.jinglertpengine.ng;
 
+import com.codahale.metrics.Gauge;
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
+import com.upptalk.jinglertpengine.metrics.MetricsHolder;
 import com.upptalk.jinglertpengine.ng.protocol.NgCommand;
 import com.upptalk.jinglertpengine.ng.protocol.NgCommandType;
 import com.upptalk.jinglertpengine.ng.protocol.NgResult;
@@ -13,6 +15,8 @@ import org.springframework.util.Assert;
 import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.concurrent.*;
+
+import static com.codahale.metrics.MetricRegistry.name;
 
 /**
  * Channel stats manager
@@ -176,7 +180,30 @@ public class ChannelStatsManager implements NgResultListener, NgCommandListener 
 
         ChannelStats stats = channelStats.get(server);
         if (stats == null) {
-            stats = new ChannelStats();
+            final ChannelStats s = new ChannelStats();
+            stats = s;
+            MetricsHolder.getMetrics().register(name(ChannelStatsManager.class,
+                    "channel-active-relay-channels-"+server.getHostString()), new Gauge<Integer>() {
+                @Override
+                public Integer getValue() {
+                    return s.getActiveRelayChannels();
+                }
+            });
+            MetricsHolder.getMetrics().register(name(ChannelStatsManager.class,
+                    "channel-received-commands-"+server.getHostString()), new Gauge<Integer>() {
+                @Override
+                public Integer getValue() {
+                    return s.getReceivedCommands();
+                }
+            });
+
+            MetricsHolder.getMetrics().register(name(ChannelStatsManager.class,
+                    "channel-sent-commands-"+server.getHostString()), new Gauge<Integer>() {
+                @Override
+                public Integer getValue() {
+                    return s.getSentCommands();
+                }
+            });
             channelStats.put(server, stats);
         }
 

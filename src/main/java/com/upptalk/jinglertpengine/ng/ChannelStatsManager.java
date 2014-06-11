@@ -49,7 +49,7 @@ public class ChannelStatsManager implements NgResultListener, NgCommandListener 
         timeoutTasks = new ConcurrentLinkedHashMap.Builder().maximumWeightedCapacity(10000).build();
         service = Executors.newScheduledThreadPool(timeoutTaskThreadPoolSize,
                 new NamingThreadFactory("TimeoutTask"));
-        service.scheduleAtFixedRate(new ChannelKeepAliveTask(), 0,
+        service.scheduleAtFixedRate(new ChannelKeepAliveTask(), getChannelAvailableTaskDelay(),
                 getChannelAvailableTaskDelay(), TimeUnit.MILLISECONDS);
         ngClient.getResultListeners().add(this);
         ngClient.getCommandListeners().add(this);

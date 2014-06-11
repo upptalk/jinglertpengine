@@ -31,7 +31,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class NgClient {
 
     private static final Logger log = Logger.getLogger(NgClient.class);
-    public static final long DEFAULT_CHANNEL_TIMEOUT_VALUE = 20000;
+    public static final long DEFAULT_CHANNEL_TIMEOUT_VALUE = 120000;
     public static final long DEFAULT_CHANNEL_AVAILABLE_TASK_DELAY_VALUE = 60000;
     public static final int DEFAULT_TIMEOUT_THREAD_POOL_VALUE = 5;
 

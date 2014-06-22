@@ -10,7 +10,7 @@
     <bean id="propertyConfigurer"
           class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
         <property name="location">
-            <value>file:///${jinglertpengine.home}/jinglertpengine-properties.xml</value>
+            <value>file:///${jinglertpengine.home}/conf/jinglertpengine-properties.xml</value>
         </property>
         <property name="ignoreUnresolvablePlaceholders" value="true"/>
     </bean>

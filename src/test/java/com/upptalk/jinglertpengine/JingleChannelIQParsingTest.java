@@ -20,7 +20,7 @@ public class JingleChannelIQParsingTest {
             "<channel xmlns=\"http://jabber.org/protocol/jinglenodes#channel\" protocol=\"udp\"></channel>" +
             "</iq>";
 
-    String getJingleChannelResultIQString = "<iq type=\"get\" id=\"764-35019616\" to=\"+16109862250@sipin3601.ym.ms\" " +
+    String getJingleChannelResultIQString = "<iq type=\"result\" id=\"764-35019616\" to=\"+16109862250@sipin3601.ym.ms\" " +
             "from=\"+16109862250@sjin360.ym.ms\"><channel xmlns=\"http://jabber.org/protocol/jinglenodes#channel\" " +
             "host=\"189.20.30.1\" localport=\"2300\" remoteport=\"40000\" id=\"1n98c318n\"></channel></iq>";
 

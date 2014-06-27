@@ -31,10 +31,10 @@
         <appender-ref ref="metrics"/>
     </logger>
 
-    <category name="jinglertpengine-stats">
+<!--    <category name="jinglertpengine-stats">
         <priority value="error" />
         <appender-ref ref="appender" />
-    </category>
+    </category>-->
 
     <root>
         <priority value="debug"/>

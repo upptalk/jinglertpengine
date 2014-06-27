@@ -66,7 +66,7 @@
         </property>
     </bean>
 
-    <bean id="xmlRpcServer" class="com.upptalk.jinglertpengine.web.EmbeddedHttpServer">
+    <bean id="xmlRpcServer" class="com.upptalk.jinglertpengine.web.EmbeddedHttpServer" init-method="start">
         <constructor-arg index="0" value="${mediaproxy.xmlrpc.port}"/>
         <constructor-arg index="1">
             <map>

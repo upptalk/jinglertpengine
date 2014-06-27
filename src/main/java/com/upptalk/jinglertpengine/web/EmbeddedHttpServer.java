@@ -7,6 +7,7 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 
 import javax.servlet.http.HttpServlet;
+import java.net.InetSocketAddress;
 import java.util.Map;
 
 /**
@@ -18,23 +19,30 @@ import java.util.Map;
  */
 public class EmbeddedHttpServer {
     final static Logger log = Logger.getLogger(EmbeddedHttpServer.class);
+    private final static String DEFAULT_HOST = "localhost";
     private Server server;
     private ServletContextHandler context;
     private final int port;
+    private final String host;
     private final Map<String, HttpServlet> servletMapping;
 
-    public EmbeddedHttpServer(int port, Map<String, HttpServlet> servletMapping) {
+    public EmbeddedHttpServer(String host, int port, Map<String, HttpServlet> servletMapping) {
+        this.host = host;
         this.port = port;
         this.servletMapping = servletMapping;
     }
 
+    public EmbeddedHttpServer(int port, Map<String, HttpServlet> servletMapping) {
+        this(DEFAULT_HOST, port, servletMapping);
+    }
+
     public EmbeddedHttpServer(Map<String, HttpServlet> servletMapping) {
-        this(8080, servletMapping);
+        this(DEFAULT_HOST, 8080, servletMapping);
     }
 
     public void start() throws Exception {
         log.info("Starting embedded http server on port: " + port);
-        server = new Server(port);
+        server = new Server(new InetSocketAddress(host, port));
         context = new ServletContextHandler(ServletContextHandler.SESSIONS);
         server.setHandler(context);
 

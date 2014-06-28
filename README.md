@@ -17,23 +17,46 @@ Clone mediaproxy-ng branch [2.3](https://github.com/sipwise/mediaproxy-ng/tree/2
 
 ```
 
-Compile & install according to instructions [here](https://github.com/sipwise/mediaproxy-ng/tree/2.3#manual-compilation).
+Compile & install according to instructions [here](https://github.com/sipwise/mediaproxy-ng/tree/2.3#on-a-debian-system).
 
-Create a startup script on Linux setting the parameter ```b2b-url``` for pointing to jinglertpengine killed sessions XML RPC
-callback address:
+* For some Debian versions you may find some trouble compiling the kernel module of media-proxy-ng 
+against the current linux kernel. For solving it you may install linux headers and create a symbolic to 
+the linux sources. Example:
+
 ```
-# this only needs to be one once after system (re-) boot
-modprobe xt_MEDIAPROXY
-iptables -I INPUT -p udp -j MEDIAPROXY --id 0
-ip6tables -I INPUT -p udp -j MEDIAPROXY --id 0
+> sudo dpkg -i ngcp-mediaproxy-ng-kernel-dkms_2.9.9_all.deb
+ ... compiling ERROR
+  
+> sudo apt-get install linux-headers-3.2.0-4-amd64
+> sudo ln -s /usr/src/linux-headers-3.2.0-4-amd64  /lib/modules/3.2.0-4-amd64/build    
 
-# ensure that the table we want to use doesn't exist - usually needed after a daemon
-# restart, otherwise will error
-echo 'del 0' > /proc/mediaproxy/control
+```
 
-# start daemon
-/usr/bin/mediaproxy-ng --table=0 --ip=127.0.0.1  \
---listen-ng=127.0.0.1:2223 --tos=184 --pidfile=/var/run/mediaproxyng.pid --no-fallback --b2b-url=http://localhost:8080/xmlrpc
+Modify mediaproxy-ng parameters  on ```/etc/default/ngcp-mediaproxy-ng-daemon``` setting the parameter 
+```b2b-url``` for pointing to jinglertpengine XMLRPC callback address, and IP addresses:
+
+```
+RUN_MEDIAPROXY=yes
+LISTEN_TCP=25060
+LISTEN_UDP=12222
+LISTEN_NG=2223
+ADDRESS=178.33.162.38
+# ADV_ADDRESS=...
+# ADDRESS_IPV6=...
+# ADV_ADDRESS_IPV6=...
+TIMEOUT=60
+SILENT_TIMEOUT=3600
+PIDFILE=/var/run/ngcp-mediaproxy-ng-daemon.pid
+FORK=yes
+TOS=184
+TABLE=0
+NO_FALLBACK=yes
+PORT_MIN=10000
+PORT_MAX=60000
+# REDIS=127.0.0.1:6379
+# REDIS_DB=1
+B2B_URL=http://127.0.0.1:8080/xmlrpc
+# LOG_LEVEL=6
 ```
 
 ## Building/Installing

@@ -15,7 +15,7 @@ import java.util.concurrent.BlockingQueue;
 public class ExternalComponentMock extends ExternalComponent {
 
     private static final Logger log = Logger.getLogger(ExternalComponentMock.class);
-    final BlockingQueue<Packet> results = new BlockingArrayQueue<>(10);
+    final BlockingQueue<Packet> results = new BlockingArrayQueue<Packet>(10);
 
     /**
      * Create a new externalComponent which provides jinglenodes services

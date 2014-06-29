@@ -26,15 +26,10 @@
         </layout>
     </appender>
 
-    <logger name="jinglertpengine-stats">
+    <logger name="com.upptalk.jinglertpengine.metrics.MetricsHolder" additivity="false">
         <level value="info"/>
         <appender-ref ref="metrics"/>
     </logger>
-
-<!--    <category name="jinglertpengine-stats">
-        <priority value="error" />
-        <appender-ref ref="appender" />
-    </category>-->
 
     <root>
         <priority value="debug"/>

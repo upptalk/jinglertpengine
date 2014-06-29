@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 public class MetricsHolder {
 
 
-    private static final Logger metricsLog = Logger.getLogger("jinglertpengine-stats");
+    private static final Logger metricsLog = Logger.getLogger(MetricsHolder.class);
 
     private static final long METRICS_LOG_SCHEDULER_DELAY = 60000;
     private static final MetricRegistry metrics = new MetricRegistry();

@@ -33,7 +33,7 @@ public class SdpUtil {
      * @return from-tag string
      */
     public static String getFakeFromTag(IQ iq) {
-        return iq.getFrom().getNode() != null ? iq.getFrom().getNode().replace("+", "00") : iq.getFrom().getDomain()
+        return (iq.getFrom().getNode() != null ? iq.getFrom().getNode().replace("+", "00") : iq.getFrom().getDomain())
                 + FAKE_TAG_MARK + iq.getID();
     }
 
@@ -44,7 +44,7 @@ public class SdpUtil {
      * @return to-tag string
      */
     public static String getFakeToTag(IQ iq) {
-        return iq.getTo().getNode() != null ? iq.getTo().getNode().replace("+", "00") : iq.getTo().getDomain()
+        return (iq.getTo().getNode() != null ? iq.getTo().getNode().replace("+", "00") : iq.getTo().getDomain())
                 + FAKE_TAG_MARK + iq.getID();
     }
 

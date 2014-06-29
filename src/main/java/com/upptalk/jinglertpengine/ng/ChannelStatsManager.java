@@ -130,13 +130,15 @@ public class ChannelStatsManager implements NgResultListener, NgCommandListener 
                     }
                 }
             } catch (Exception e) {
-
+                log.error("Error cancelling time out task", e);
             }
         }
 
         if (entry != null) {
             if (result.getNgResultType().equals(NgResultType.timeout)) {
-                checkChannel(entry.getServer());
+                if (entry.getCommand().getNgCommandType().equals(NgCommandType.ping)) {
+                    checkChannel(entry.getServer());
+                }
             } else {
                 final ChannelStats stats = getChannelStats(entry.getServer());
                 stats.addReceivedCommands();
@@ -145,7 +147,11 @@ public class ChannelStatsManager implements NgResultListener, NgCommandListener 
                 }
                 if (result.getNgResultType().equals(NgResultType.pong)) {
                     stats.setLastPongTimestamp(System.currentTimeMillis());
-                    checkChannel(entry.getServer());
+                    if (!getNgClient().getAvailableServers().contains(entry.getServer())) {
+                        getNgClient().getAvailableServers().add(entry.getServer());
+                        log.warn("Channel ["+entry.getServer().toString()+"] " +
+                                "responded to PING. Adding to list of available servers...");
+                    }
                 }
             }
         } else {
@@ -290,10 +296,6 @@ public class ChannelStatsManager implements NgResultListener, NgCommandListener 
                     log.debug("Channel is already removed from available servers:  " + server);
                 }
             }
-        } else if (!getNgClient().getAvailableServers().contains(server)) {
-            getNgClient().getAvailableServers().add(server);
-            log.warn("Channel ["+server.toString()+"] " +
-                    "responded to PING. Adding to list of available servers...");
         } else {
             if (log.isDebugEnabled()) {
                 log.debug("Channel is available:  " + server);

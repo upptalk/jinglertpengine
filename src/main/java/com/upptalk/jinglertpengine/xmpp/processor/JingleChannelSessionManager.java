@@ -264,8 +264,8 @@ public class JingleChannelSessionManager implements NgResultListener {
                 setParameter("sdp", SdpUtil.fakeSdpOffer.toString()).
                 build();
         sessionsByCookie.put(cookie, s);
-        ngClient.send(offer, s.getRequestIQ().getFrom().getNode());
         s.setOfferRequest(offer);
+        ngClient.send(offer, s.getRequestIQ().getFrom().getNode());
         if (log.isDebugEnabled()) {
             log.debug("Sent offer command: " + offer);
         }
@@ -285,8 +285,8 @@ public class JingleChannelSessionManager implements NgResultListener {
                 setParameter("sdp", SdpUtil.fakeSdpAnswer.toString()).
                 build();
         sessionsByCookie.put(cookie, s);
-        ngClient.send(answer, s.getRequestIQ().getFrom().getNode());
         s.setAnswerRequest(answer);
+        ngClient.send(answer, s.getRequestIQ().getFrom().getNode());
         if (log.isDebugEnabled()) {
             log.debug("Sent answer command: " + answer);
         }

@@ -1,11 +1,14 @@
 package com.upptalk.jinglertpengine;
 
 import com.upptalk.jinglertpengine.xmpp.jinglenodes.JingleChannel;
+import com.upptalk.jinglertpengine.xmpp.tinder.AchievementEventIQ;
 import com.upptalk.jinglertpengine.xmpp.tinder.JingleChannelEventIQ;
 import com.upptalk.jinglertpengine.xmpp.tinder.JingleChannelIQ;
 import org.junit.Test;
 import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
 
+import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -93,6 +96,19 @@ public class JingleChannelIQParsingTest {
         JingleChannelIQ iq2 = JingleChannelIQ.fromXml(iq);
 
         System.out.println(iq2.toXML());
+
+    }
+
+
+    @Test
+    public void testAchievementEvent() {
+
+        AchievementEventIQ iq = AchievementEventIQ.createRequest(new JID("me@ut.ms"), new JID("achievement.ut.ms"), "500");
+
+        assertTrue(iq.toXML().contains("key=\"call_killed\" value=\"500\""));
+
+        System.out.println(iq.toXML());
+
 
     }
 

@@ -15,6 +15,7 @@
         <property name="ignoreUnresolvablePlaceholders" value="true"/>
     </bean>
 
+
     <bean id="externalComponentManager" class="org.jivesoftware.whack.ExternalComponentManager">
         <constructor-arg value="${xmpp.server}"/>
         <constructor-arg value="${xmpp.port}"/>
@@ -39,13 +40,14 @@
         </property>
     </bean>
 
-    <bean id="jingleChannelProcessor" class="com.upptalk.jinglertpengine.xmpp.processor.JingleChannelProcessor" abstract="false">
+    <bean id="jingleChannelProcessor" class="com.upptalk.jinglertpengine.xmpp.processor.JingleChannelProcessor">
         <constructor-arg index="0" ref="externalComponent"/>
         <property name="sessionManager" ref="jingleChannelSessionManager"/>
     </bean>
 
-    <bean id="jingleChannelEventProcessor" class="com.upptalk.jinglertpengine.xmpp.processor.JingleChannelEventProcessor" abstract="false">
+    <bean id="jingleChannelEventProcessor" class="com.upptalk.jinglertpengine.xmpp.processor.JingleChannelEventProcessor">
         <constructor-arg index="0" ref="externalComponent"/>
+        <property name="achievementService" value="${achievementService}"/>
     </bean>
 
     <bean id="jingleChannelSessionManager" class="com.upptalk.jinglertpengine.xmpp.processor.JingleChannelSessionManager">
@@ -65,10 +67,13 @@
         </property>
     </bean>
 
-    <bean id="xmlRpcServer" class="com.upptalk.jinglertpengine.web.EmbeddedHttpServer">
+    <bean id="xmlRpcServer" class="com.upptalk.jinglertpengine.web.EmbeddedHttpServer" init-method="start">
         <constructor-arg index="0" value="${mediaproxy.xmlrpc.port}"/>
         <constructor-arg index="1">
             <map>
+                <entry key="/metrics">
+                    <bean class="com.codahale.metrics.servlets.MetricsServlet"/>
+                </entry>
                 <entry key="/xmlrpc">
                     <bean class="com.upptalk.jinglertpengine.web.servlets.XmlRpcKillChannelServlet">
                         <constructor-arg index="0" ref="jingleChannelSessionManager"/>
@@ -77,5 +82,4 @@
             </map>
         </constructor-arg>
     </bean>
-
 </beans>

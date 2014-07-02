@@ -47,6 +47,7 @@
 
     <bean id="jingleChannelEventProcessor" class="com.upptalk.jinglertpengine.xmpp.processor.JingleChannelEventProcessor">
         <constructor-arg index="0" ref="externalComponent"/>
+        <property name="achievementService" value="${achievementService.jid}"/>
     </bean>
 
     <bean id="jingleChannelSessionManager" class="com.upptalk.jinglertpengine.xmpp.processor.JingleChannelSessionManager">

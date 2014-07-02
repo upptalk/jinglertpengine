@@ -15,7 +15,7 @@ public class ServerTest {
         System.setProperty("jinglertpengine.home",
                 Main.class.getProtectionDomain().getCodeSource().getLocation().getPath());
 
-        Main.main(new String[]{"start", "jinglertpengine.xml", "log4j.xml"});
+        Main.main(new String[]{"start", "jinglertpengine-test.xml", "log4j.xml"});
 
     }
 

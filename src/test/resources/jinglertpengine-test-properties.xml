@@ -13,4 +13,6 @@
 
     <entry key="mediaproxy.xmlrpc.port">8080</entry>
 
+    <entry key="achievementService.jid">achievement.ym.ms</entry>
+
 </properties>

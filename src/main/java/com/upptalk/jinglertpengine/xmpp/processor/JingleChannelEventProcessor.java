@@ -27,11 +27,13 @@ package com.upptalk.jinglertpengine.xmpp.processor;
 import com.upptalk.jinglertpengine.xmpp.component.ExternalComponent;
 import com.upptalk.jinglertpengine.xmpp.component.NamespaceProcessor;
 import com.upptalk.jinglertpengine.xmpp.jinglenodes.JingleChannelEvent;
+import com.upptalk.jinglertpengine.xmpp.tinder.AchievementEventIQ;
 import com.upptalk.jinglertpengine.xmpp.tinder.JingleChannelEventIQ;
 import com.upptalk.jinglertpengine.xmpp.tinder.JingleChannelIQ;
 import org.apache.log4j.Logger;
 import org.springframework.util.Assert;
 import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
 
 /**
  * Jingle Channel Event processor
@@ -42,6 +44,8 @@ public class JingleChannelEventProcessor implements NamespaceProcessor {
 
     final static Logger log = Logger.getLogger(JingleChannelEventProcessor.class);
     private final ExternalComponent externalComponent;
+    private String achievementService;
+    private JID achievementJid;
 
     public JingleChannelEventProcessor(final ExternalComponent externalComponent) {
         Assert.notNull(externalComponent);
@@ -60,10 +64,22 @@ public class JingleChannelEventProcessor implements NamespaceProcessor {
      * @return
      */
     public JingleChannelEventIQ sendChannelEvent(JingleChannelIQ result, String time) {
-        JingleChannelEventIQ iq = JingleChannelEventIQ.createRequest(result, time);
-        getExternalComponent().send(iq);
-        log.info("Send channel killed notification with id: " + iq.getID());
-        return iq;
+        JingleChannelEventIQ jingleChannelEventIQ = JingleChannelEventIQ.createRequest(result, time);
+        getExternalComponent().send(jingleChannelEventIQ);
+        log.info("Send channel killed notification with id: " + jingleChannelEventIQ.getID());
+
+        if (getAchievementJid() != null) {
+            try {
+                AchievementEventIQ achievementEventIQ = AchievementEventIQ.createRequest(result.getFrom(),
+                        getAchievementJid(), time);
+                getExternalComponent().send(achievementEventIQ); // notify achievement service
+            } catch (Exception e) {
+                log.error("Error sending achievement " , e);
+            }
+
+        }
+
+        return jingleChannelEventIQ;
     }
 
     @Override
@@ -97,4 +113,20 @@ public class JingleChannelEventProcessor implements NamespaceProcessor {
         return externalComponent;
     }
 
+    public String getAchievementService() {
+        return achievementService;
+    }
+
+    public void setAchievementService(String achievementService) {
+        this.achievementService = achievementService;
+        setAchievementJid(new JID(achievementService));
+    }
+
+    public JID getAchievementJid() {
+        return achievementJid;
+    }
+
+    public void setAchievementJid(JID achievementJid) {
+        this.achievementJid = achievementJid;
+    }
 }

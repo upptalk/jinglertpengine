@@ -102,8 +102,11 @@ public class JingleChannelSessionManager implements NgResultListener {
         if (sessions.size() >= SESSION_MAX_ENTRIES) {
             throw new JingleChannelManagerException("Maximum number of channels exceeded " + SESSION_MAX_ENTRIES);
         }
+        if (sessions.containsKey(id)) {
+            throw new JingleChannelManagerException("Message id is currently exists " + id);
+        }
         final JingleChannelSession s = new JingleChannelSession(id, requestIQ);
-        sessions.put(s.getRequestIQ().getID(), s);
+        sessions.put(id, s);
         sendOfferRequest(s);
         ScheduledFuture f = scheduledService.scheduleWithFixedDelay(new ChannelKeepAliveTask(s),
                 getChannelKeepAliveTaskDelay(), getChannelKeepAliveTaskDelay(), TimeUnit.MILLISECONDS);

@@ -128,17 +128,20 @@ public class NgClient {
      * @throws Exception
      */
     public void sendDirect(NgCommand command, InetSocketAddress server) throws Exception {
-        if (log.isDebugEnabled()) {
-            log.debug("Sending message direct: "+ command.toBencode());
-        }
+
         if (getCommandListeners() != null) {
             for (NgCommandListener listener: getCommandListeners()) {
                 listener.sent(command, server);
             }
         }
+
         channel.writeAndFlush(new DatagramPacket(
                 Unpooled.copiedBuffer(command.toBencode(), CharsetUtil.UTF_8),
                 server)).sync();
+
+        if (log.isDebugEnabled()) {
+            log.debug("Sent message direct: "+ command.toBencode());
+        }
     }
 
     public void close() throws InterruptedException {

@@ -141,7 +141,8 @@ public class JingleChannelSessionManager implements NgResultListener {
         try {
             final JingleChannelSession s = destroySession(id);
             if (s != null) {
-                getChannelEventProcessor().sendChannelEvent(s.getResponseIQ(), Long.toString(s.getTime()));
+                getChannelEventProcessor().sendChannelEvent(s.getRequestIQ(),
+                        s.getResponseIQ(), Long.toString(s.getTime()));
             }
         } catch (Exception e) {
             log.error("Couldn't send event message: ", e);

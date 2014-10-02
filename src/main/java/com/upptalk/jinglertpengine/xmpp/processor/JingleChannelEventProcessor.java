@@ -59,18 +59,19 @@ public class JingleChannelEventProcessor implements NamespaceProcessor {
     /**
      * Notify about killed channels
      *
+     * @para request Channel request IQ
      * @param result Channel Result IQ
      * @param time total time spent by the killed channel
      * @return
      */
-    public JingleChannelEventIQ sendChannelEvent(JingleChannelIQ result, String time) {
+    public JingleChannelEventIQ sendChannelEvent(JingleChannelIQ request, JingleChannelIQ result, String time) {
         JingleChannelEventIQ jingleChannelEventIQ = JingleChannelEventIQ.createRequest(result, time);
         getExternalComponent().send(jingleChannelEventIQ);
         log.info("Send channel killed notification with id: " + jingleChannelEventIQ.getID());
 
         if (getAchievementJid() != null) {
             try {
-                AchievementEventIQ achievementEventIQ = AchievementEventIQ.createRequest(result.getFrom(),
+                AchievementEventIQ achievementEventIQ = AchievementEventIQ.createRequest(request.getFrom(),
                         getAchievementJid(), time);
                 getExternalComponent().send(achievementEventIQ); // notify achievement service
             } catch (Exception e) {

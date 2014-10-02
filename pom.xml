@@ -6,7 +6,7 @@
 
     <groupId>com.upptalk.jinglertpengine</groupId>
     <artifactId>jinglertpengine</artifactId>
-    <version>1.0.7</version>
+    <version>1.0.8</version>
     <packaging>jar</packaging>
     <description>Jingle RTP Engine - Jingle Bridge for RTPEngine/MediaProxy</description>
 
